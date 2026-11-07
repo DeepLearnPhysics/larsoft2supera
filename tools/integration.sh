@@ -25,12 +25,15 @@ cmake -S "$SUPERA_SOURCE" -B build/atomic-icarus -DSUPERA_BUILD_LARCV2=ON \
 cmake --build build/atomic-icarus -j2
 ctest --test-dir build/atomic-icarus --output-on-failure
 cmake --install build/atomic-icarus
-cmake -S . -B build/adapter-icarus -DCMAKE_PREFIX_PATH="$stage" \
+cmake -S . -B build/adapter-icarus -DSupera_DIR="$stage/lib64/cmake/Supera" \
+  -DCMAKE_PREFIX_PATH="$stage" \
   -DCMAKE_INSTALL_PREFIX="$stage"
 cmake --build build/adapter-icarus -j2
 ctest --test-dir build/adapter-icarus --output-on-failure
 cmake --install build/adapter-icarus
-cmake -S tests/consumer -B build/installed-consumer -DCMAKE_PREFIX_PATH="$stage"
+cmake -S tests/consumer -B build/installed-consumer \
+  -Dlarsoft2supera_DIR="$stage/lib64/cmake/larsoft2supera" \
+  -DSupera_DIR="$stage/lib64/cmake/Supera" -DCMAKE_PREFIX_PATH="$stage"
 cmake --build build/installed-consumer -j2
 build/installed-consumer/bin/consumer
 
@@ -42,3 +45,6 @@ python3 tests/integration.py \
   --reference "$FIXTURE_ROOT/results/staged-full-01/supera_reference.root" \
   --reference "$FIXTURE_ROOT/results/standard-full-01/larcv_mc_20261107_001608_861108.root" \
   --expected-ids "$VALIDATION_DIR/event-ids.json" --output "$VALIDATION_DIR/events"
+
+# Native generator tests require ROOT/nusimdata and cannot run in the lean image.
+bash tools/generator-checks.sh

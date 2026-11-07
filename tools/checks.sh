@@ -15,7 +15,7 @@ export LARDATAOBJ_SOURCE=${LARDATAOBJ_SOURCE:-$PWD/build/deps/lardataobj}
 export SBNOBJ_SOURCE=${SBNOBJ_SOURCE:-$PWD/build/deps/sbnobj}
 export SUPERA_SOURCE=${SUPERA_SOURCE:-$PWD/build/deps/SuperaAtomic}
 fetch_source "$SUPERA_SOURCE" https://github.com/DeepLearnPhysics/SuperaAtomic.git \
-  7bb73fb443eb0d6073649273cb5eb7577b1d87c5
+  77953b3ab72e139c28772004ddc3c8a94bc602b9
 fetch_source "$LARDATAOBJ_SOURCE" https://github.com/LArSoft/lardataobj.git \
   949008add3a77ef7d532536d8e7b7343cb5e9190
 fetch_source "$SBNOBJ_SOURCE" https://github.com/SBNSoftware/sbnobj.git \
@@ -26,7 +26,7 @@ cmake -S "$SUPERA_SOURCE" -B build/supera-data -DSUPERA_BUILD_LARCV2=OFF \
 cmake --build build/supera-data -j2
 ctest --test-dir build/supera-data --output-on-failure
 cmake --install build/supera-data
-clang-tidy-14 -p build/supera-data "$SUPERA_SOURCE/tests/v2/Data_test.cxx"
+clang-tidy-14 -p build/supera-data "$SUPERA_SOURCE/tests/v2/Data_test.cxx" "$SUPERA_SOURCE/tests/v2/Generator_test.cxx"
 
 mapfile -t files < <(find include src plugins tests -type f \
   \( -name '*.h' -o -name '*.hxx' -o -name '*.cc' -o -name '*.cxx' \) | sort)
@@ -47,3 +47,11 @@ cmake -S . -B build/v2-sanitizers -DLARSOFT2SUPERA_BUILD_ART=OFF \
   -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined'
 cmake --build build/v2-sanitizers -j2
 ctest --test-dir build/v2-sanitizers --output-on-failure
+
+# Shared selection is header-only and should also run under the sanitizer build.
+cmake -S "$SUPERA_SOURCE" -B build/supera-sanitizers -DSUPERA_BUILD_LARCV2=OFF \
+  -DSUPERA_BUILD_LABELING=OFF \
+  -DCMAKE_CXX_FLAGS='-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer' \
+  -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined'
+cmake --build build/supera-sanitizers -j2
+ctest --test-dir build/supera-sanitizers --output-on-failure

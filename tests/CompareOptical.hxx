@@ -7,6 +7,8 @@
 #include "larcv/core/DataFormat/EventBase.h"
 #include "larcv/core/DataFormat/EventCRTHit.h"
 #include "larcv/core/DataFormat/EventFlash.h"
+#include "larcv/core/DataFormat/EventNeutrino.h"
+#include "larcv/core/DataFormat/EventParticle.h"
 #include <algorithm>
 #include <cstring>
 #include <map>
@@ -58,7 +60,7 @@ std::map<std::string, std::string> branches(TTree &t) {
 }
 
 std::vector<Row> compare(const char *left, const char *right, Long64_t expected_entries,
-                         bool auxiliary = false) {
+                         bool auxiliary = false, bool generator = false) {
   std::unique_ptr<TFile> a(TFile::Open(left)), b(TFile::Open(right));
   if (!a || !b || a->IsZombie() || b->IsZombie())
     throw std::runtime_error("Cannot open input files");
@@ -66,6 +68,10 @@ std::vector<Row> compare(const char *left, const char *right, Long64_t expected_
                                              {"opflash_cryoW_tree", "TTree"}};
   if (auxiliary)
     keys.emplace("crthit_crthit_tree", "TTree");
+  if (generator) {
+    keys.emplace("particle_mpv_tree", "TTree");
+    keys.emplace("neutrino_mpv_tree", "TTree");
+  }
   const auto reference_keys = tree_keys(*a);
   for (const auto &key : keys)
     if (!reference_keys.count(key.first))

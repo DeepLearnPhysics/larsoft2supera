@@ -133,3 +133,70 @@ Do not open upstream issues or mark fixes approved automatically.
   independent readback verifies every serialized field and empty-event clearing.
 - **Reference impact:** intended to be none for the supported ICARUS sample.
 - **Reviewer decision/upstream report:** none.
+
+## F-009: generator particle momentum and energy use inconsistent units
+
+- **Status:** confirmed legacy mapping; compatibility behavior retained explicitly.
+- **Baseline:** `SuperaMCTruth.cxx` at `9e7b533`, ICARUS `v10_27_00`.
+- **Evidence:** Particle momentum is multiplied by 1000 while its initial energy
+  is copied unchanged from GeV. Neutrino momentum and energy both remain in GeV.
+- **Impact:** interpreting both products with one momentum/energy unit convention
+  is unsafe. The shared records now have explicit GeV-based field names.
+- **Test:** independent 0.25 GeV/c and 1.25 GeV inputs produce the legacy Particle
+  values 250 and 1.25, and Neutrino values 0.25 and 1.25.
+- **Decision:** isolate this conversion in `project_legacy_generator`;
+  changing persisted units requires a separate reviewed output policy.
+- **Upstream report:** none.
+
+## F-010: legacy generator identity depends on product availability
+
+- **Status:** confirmed information loss; shared identity corrected locally.
+- **Evidence:** `mct_index` counts present products, not original MCTruth indices.
+  Missing products do not advance the counter; present-empty products do.
+  Multiple interactions in one product therefore share an output index.
+- **Resolution:** shared records retain configured source slots, original MCTruth
+  indices, and original particle indices. Missing products have an explicit
+  availability flag. The LArCV2 compatibility counter remains separate.
+- **Test:** missing, present-empty and populated sources, two interactions in one
+  source, and status/origin selections retaining original indices.
+- **Output impact:** deliberately unchanged for compatibility. A replacement
+  format must persist the full source/interaction identity.
+- **Reviewer decision/upstream report:** pending; none.
+
+## F-011: legacy generator shape policy excludes positrons from showers
+
+- **Status:** confirmed mapping asymmetry; physical policy correction deferred.
+- **Evidence:** legacy code tests `pdg == 11 || pdg == 22`, so `pdg == -11`
+  receives track shape. The incoming-neutrino particle keeps unknown shape.
+- **Resolution:** do not assign these labels to shared generator records; retain
+  the exact rule only in the explicitly named legacy output projection.
+- **Test:** independent electron/positron expectations and incoming-neutrino shape.
+- **Reviewer decision/upstream report:** no changed labeling policy approved; none.
+
+## F-012: missing generator trajectories are dereferenced without checks
+
+- **Status:** locally guarded; reviewer acceptance pending.
+- **Evidence:** legacy reads position/momentum point zero for selected particles;
+  native neutrino theta also needs incoming and outgoing momentum points.
+- **Resolution:** extraction represents unavailable initial kinematics/theta as
+  absent; shared selection filters first and rejects retained malformed records
+  explicitly. No fabricated kinematics and no out-of-bounds access.
+- **Test:** missing unselected trajectories remain harmless; selected malformed
+  particles/neutrinos fail. Origin-rejected malformed interactions are allowed.
+- **Reference impact:** expected none for well-formed input.
+- **Upstream report:** none.
+
+## F-013: generator output object IDs retain the wrong invalid sentinel
+
+- **Status:** confirmed in the pinned LArCV2 writer test.
+- **Evidence:** Particle/Neutrino initialize `_id` to `kINVALID_INDEX` (65535),
+  while insertion assigns sequential IDs only for `kINVALID_INSTANCEID`, a
+  different value. The legacy processor never assigns object IDs itself.
+- **Impact:** these generator objects retain 65535 rather than collection-local
+  unique IDs. The event's run/subrun/event identity is unaffected.
+- **Resolution:** shared source/interaction/particle indices provide identity;
+  compatibility serialization retains the observed sentinel. Do not depend on
+  LArCV object IDs as a unique key for these products.
+- **Test:** two interactions and multiple particles read back from both trees;
+  every object keeps the pinned sentinel while event IDs remain correct.
+- **Reviewer decision/upstream report:** output correction deferred; none.

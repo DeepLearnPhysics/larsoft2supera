@@ -3,7 +3,7 @@
 LArSoft input adapter for [SuperaAtomic][atomic], enabling shared LArTPC
 voxelization and truth labeling across experiments.
 
-**Status: optical and ICARUS auxiliary-detector checkpoints validated.** The shared data
+**Status: optical, ICARUS auxiliary-detector, and generator checkpoints validated.** The shared data
 model and LArCV2 writer are coordinated changes in SuperaAtomic.
 The first target is ICARUS overlay data. Support for other experiments will be
 added through explicit input contracts and integration tests.
@@ -71,6 +71,9 @@ the flash fields, including associations and possible truth inputs. Field-copy
 parity alone will not establish complete optical support.
 Each functionality addition is a cohesive commit with its tests and migration
 record. Broader behavior changes remain separate review decisions.
+
+The [generator checkpoint (`mpv`)](docs/mctruth-port.md) includes
+its field audit and explicit legacy compatibility decisions.
 
 ## Development
 

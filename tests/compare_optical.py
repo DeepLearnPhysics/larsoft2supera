@@ -25,8 +25,8 @@ def load_comparator():
         raise RuntimeError('Cannot compile comparator')
 
 
-def compare(left, right, expected_ids, auxiliary=False):
-    rows = ROOT.supera_audit.compare(str(left), str(right), len(expected_ids), auxiliary)
+def compare(left, right, expected_ids, auxiliary=False, generator=False):
+    rows = ROOT.supera_audit.compare(str(left), str(right), len(expected_ids), auxiliary, generator)
     records = []
     for row in rows:
         record = {key: str(getattr(row, key)) for key in

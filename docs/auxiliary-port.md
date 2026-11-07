@@ -111,7 +111,7 @@ script now runs both ports. `SBNOBJ_SOURCE` optionally selects the pinned sbnobj
 checkout for fast checks; otherwise the script fetches it.
 
 **Coordinated dependency:** this adapter pins Atomic
-`7bb73fb443eb0d6073649273cb5eb7577b1d87c5` in `tools/checks.sh` and both C++
+`77953b3ab72e139c28772004ddc3c8a94bc602b9` in `tools/checks.sh` and both C++
 workflows. Install that revision before building this checkpoint. Full ICARUS
 integration uses externally provisioned fixtures; local results below do not
 imply that the self-hosted integration workflow has run.

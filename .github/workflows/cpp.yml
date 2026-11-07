@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: DeepLearnPhysics/SuperaAtomic
-          ref: 7bb73fb443eb0d6073649273cb5eb7577b1d87c5
+          ref: 77953b3ab72e139c28772004ddc3c8a94bc602b9
           path: build/deps/SuperaAtomic
           persist-credentials: false
       - name: Build pinned check tools

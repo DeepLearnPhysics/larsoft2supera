@@ -57,6 +57,9 @@ The [optical audit](optical-audit.md) expands this review beyond field-copy pari
 inventory associations, available truth, producer defaults, and information the
 legacy writer does not represent. A compatibility test cannot approve an omission.
 
+The generator checkpoint was authorized for commit and publication on 2026-11-07;
+see the [MCTruth audit and contract](mctruth-port.md).
+
 ## Review packet for every behavior
 
 - **Legacy evidence:** pinned source, effective configuration, and a small trace.

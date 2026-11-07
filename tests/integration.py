@@ -106,6 +106,15 @@ def main():
         if not report["passed"]:
             raise RuntimeError("Auxiliary reference mismatch")
         auxiliary_reports.append({key: value for key, value in report.items() if key != "records"})
+    generator_config = (Path(__file__).resolve().parent.parent / "fcl/mctruth_icarus.fcl").read_text()
+    generator_output = run_case(directory, "overlay-generator", generator_config, args.input.resolve(), len(ids))
+    generator_reports = []
+    for index, reference in enumerate(args.reference):
+        report = compare(reference.resolve(), generator_output, ids, auxiliary=True, generator=True)
+        (directory / f"generator-comparison-{index}.json").write_text(json.dumps(report, indent=2) + "\n")
+        if not report["passed"]:
+            raise RuntimeError("Generator reference mismatch")
+        generator_reports.append({key: value for key, value in report.items() if key != "records"})
     collections = '[{InputTag:"fixture:east" OutputLabel:"cryoE"},' \
                   '{InputTag:"fixture:west" OutputLabel:"cryoW"}]'
     inspect_fixture(run_case(directory, "empty-collections", fixture_config(collections)))
@@ -137,6 +146,33 @@ def main():
         ("auxiliary-empty-label", combined.replace('OutputLabel:"crthit"', 'OutputLabel:""'), "must be nonempty"),
     ):
         run_case(directory, name, config, error=error)
+    generator = '[{OutputLabel:"mpv" Projection:"LegacySuperaMCTruth" Sources:[{InputTag:"absent" Required:false},{InputTag:"fixture:generator"}]}]'
+    generator_fixture = combined.replace("OutputFile:", "GeneratorCollections: " + generator + " OutputFile:")
+    fixture = run_case(directory, "generator-empty-collections", generator_fixture)
+    file = ROOT.TFile.Open(str(fixture))
+    try:
+        particles = file.Get("particle_mpv_tree")
+        neutrinos = file.Get("neutrino_mpv_tree")
+        if not particles or not neutrinos or particles.GetEntries() != 3 or neutrinos.GetEntries() != 3:
+            raise RuntimeError("Missing generator trees")
+        for index, count in enumerate((2, 0, 2)):
+            particles.GetEntry(index)
+            neutrinos.GetEntry(index)
+            record = getattr(particles, "particle_mpv_branch")
+            nu_record = getattr(neutrinos, "neutrino_mpv_branch")
+            if record.event() != index + 1 or len(record.as_vector()) != count or len(nu_record.as_vector()) != 0:
+                raise RuntimeError("Stale generator contents")
+            for position, particle in enumerate(record.as_vector()):
+                if particle.id() != 65535 or particle.mct_index() != 0 or particle.track_id() != (1 << 32) - 9 or particle.px() != 250. or particle.energy_init() != 1.:
+                    raise RuntimeError("Incorrect legacy generator mapping")
+    finally:
+        file.Close()
+    for name, config, error in (
+        ("generator-required", generator_fixture.replace("Required:false", "Required:true"), "Required generator product missing"),
+        ("generator-projection", generator_fixture.replace("LegacySuperaMCTruth", "Unknown"), "Unsupported generator Projection"),
+        ("generator-duplicate", generator_fixture.replace('InputTag:"absent" Required:false', 'InputTag:"fixture:generator"'), "Generator sources must be nonempty and unique"),
+    ):
+        run_case(directory, name, config, error=error)
     failures = {
         "missing-product": (collections.replace("fixture:east", "absent"), "ProductNotFound"),
         "wrong-process": (collections.replace("fixture:east", "fixture:east:Wrong"), "ProductNotFound"),
@@ -156,7 +192,8 @@ def main():
         pass
     else:
         raise RuntimeError("Comparator accepted an intentionally wrong event count")
-    summary = {"passed": True, "reference_comparisons": reports, "auxiliary_comparisons": auxiliary_reports,
+    summary = {"passed": True, "reference_comparisons": reports, "auxiliary_comparisons": auxiliary_reports, "generator_comparisons": generator_reports,
+               "generator_empty_sequence": "passed", "generator_expected_failures": 3,
                "auxiliary_empty_sequence": "passed", "auxiliary_expected_failures": 4,
                "empty_collection_sequence": "passed", "expected_failures": len(failures) + 1,
                "comparator_wrong_count_rejected": True}
