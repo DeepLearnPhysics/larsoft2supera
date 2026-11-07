@@ -3,6 +3,7 @@
 #include "art/Framework/Principal/Event.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "lardataobj/RecoBase/OpFlash.h"
+#include "sbnobj/Common/CRT/CRTHit.hh"
 
 #include <memory>
 #include <vector>
@@ -14,6 +15,7 @@ public:
   explicit OpticalFixture(const fhicl::ParameterSet &config) : art::EDProducer(config) {
     produces<std::vector<recob::OpFlash>>("east");
     produces<std::vector<recob::OpFlash>>("west");
+    produces<std::vector<sbn::crt::CRTHit>>("auxiliary");
   }
 
   void produce(art::Event &event) override {
@@ -27,6 +29,16 @@ public:
       west->push_back(flash);
     if (event.event() == 3)
       east->push_back(flash);
+    auto auxiliary = std::make_unique<std::vector<sbn::crt::CRTHit>>();
+    if (event.event() != 2) {
+      sbn::crt::CRTHit hit;
+      hit.peshit = 12.5F;
+      hit.ts0_s = (std::uint64_t{1} << 53) + 1;
+      hit.feb_id = {255, 0};
+      hit.pesmap = {{255, {{-1, 3.5F}}}, {0, {}}};
+      auxiliary->push_back(hit);
+    }
+    event.put(std::move(auxiliary), "auxiliary");
     event.put(std::move(east), "east");
     event.put(std::move(west), "west");
   }

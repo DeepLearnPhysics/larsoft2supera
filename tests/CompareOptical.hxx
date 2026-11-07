@@ -5,6 +5,7 @@
 #include "TKey.h"
 #include "TTree.h"
 #include "larcv/core/DataFormat/EventBase.h"
+#include "larcv/core/DataFormat/EventCRTHit.h"
 #include "larcv/core/DataFormat/EventFlash.h"
 #include <algorithm>
 #include <cstring>
@@ -21,12 +22,14 @@ struct Row {
   int left_bytes, right_bytes, first_difference;
   bool equal;
 };
+
 std::string event_id(const larcv::EventBase *p) {
   if (!p || !p->valid())
     throw std::runtime_error("Missing/invalid LArCV event identity");
   return std::to_string(p->run()) + ":" + std::to_string(p->subrun()) + ":" +
          std::to_string(p->event());
 }
+
 std::map<std::string, std::string> tree_keys(TFile &f) {
   std::map<std::string, std::string> result;
   for (auto *object : *f.GetListOfKeys()) {
@@ -40,6 +43,7 @@ std::map<std::string, std::string> tree_keys(TFile &f) {
     throw std::runtime_error("No product trees");
   return result;
 }
+
 std::map<std::string, std::string> branches(TTree &t) {
   std::map<std::string, std::string> result;
   for (auto *object : *t.GetListOfBranches()) {
@@ -52,16 +56,20 @@ std::map<std::string, std::string> branches(TTree &t) {
     throw std::runtime_error("Empty branch inventory");
   return result;
 }
-std::vector<Row> compare(const char *left, const char *right, Long64_t expected_entries) {
+
+std::vector<Row> compare(const char *left, const char *right, Long64_t expected_entries,
+                         bool auxiliary = false) {
   std::unique_ptr<TFile> a(TFile::Open(left)), b(TFile::Open(right));
   if (!a || !b || a->IsZombie() || b->IsZombie())
     throw std::runtime_error("Cannot open input files");
-  const std::map<std::string, std::string> keys = {{"opflash_cryoE_tree", "TTree"},
-                                                   {"opflash_cryoW_tree", "TTree"}};
+  std::map<std::string, std::string> keys = {{"opflash_cryoE_tree", "TTree"},
+                                             {"opflash_cryoW_tree", "TTree"}};
+  if (auxiliary)
+    keys.emplace("crthit_crthit_tree", "TTree");
   const auto reference_keys = tree_keys(*a);
   for (const auto &key : keys)
     if (!reference_keys.count(key.first))
-      throw std::runtime_error("Reference flash product missing");
+      throw std::runtime_error("Reference product missing");
   if (keys != tree_keys(*b))
     throw std::runtime_error("Product tree inventories differ");
   std::vector<Row> rows;

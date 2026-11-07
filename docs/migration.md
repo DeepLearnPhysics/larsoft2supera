@@ -8,7 +8,8 @@ does not mean that future behavior changes have been approved. Complex stages
 should span several focused, tested commits.
 
 The optical checkpoint was authorized for commit and publication on 2026-11-07.
-Further functionality additions remain staged for review.
+The auxiliary-detector checkpoint was authorized for commit and publication on
+2026-11-07; see the [auxiliary review packet](auxiliary-port.md).
 
 **Output decision:** retain LArCV2 throughout the parity migration. First reproduce
 the agreed LArCV2 products. The revised architecture establishes output-independent
@@ -19,7 +20,7 @@ remains deferred. See the [optical port](optical-port.md).
 | --- | --- | --- |
 | 0 | Inventory, ownership boundaries, frozen reference manifest, contribution rules. | Review the processor list and distinguish compatibility evidence from correctness. |
 | 1 | Event identity and optical flashes. Establish the smallest useful art-to-value conversion. | Field-by-field contract; units/time origin; collection-local identity; empty/missing inputs; two-event isolation; comparison with both reference flash products. |
-| 2 | CRT records, then MCTruth interaction/generator records. | Experiment-specific CRT mapping; timestamp types/precision; truth origin filtering; multiple generators/interactions; missing `cosmgen`; particle/neutrino units. |
+| 2 | Auxiliary records (ICARUS CRT first), then MCTruth interaction/generator records. | Experiment-specific CRT mapping; timestamp types/precision; truth origin filtering; multiple generators/interactions; missing `cosmgen`; particle/neutrino units. |
 | 3 | Detector context, fixed grid, reconstructed points and hit associations. | Coordinate transforms and boundaries; both cryostats; invalid/dangling associations; shared hits; duplicate voxels; charge selection and tie-breaking. |
 | 4 | Truth particle/deposit extraction, separately for SEDLite and SimChannels. | Track-ID identity and sign/offset policy; ancestry; dropped particles; units; conservation accounting; unassociated deposits. Start with extraction, not the complete grouped `sed` output. |
 | 5 | True-to-reco matching, then particle grouping and semantic labeling. | Traceable association evidence; independently computed small cases; intermediate group comparisons; merge order; per-event reset; overlay background policy. Shared-core changes are separate changes. |

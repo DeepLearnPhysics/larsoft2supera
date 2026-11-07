@@ -4,7 +4,7 @@ services: { scheduler: { num_threads: 1 num_schedules: 1 } }
 physics: {
   analyzers: {
     optical: {
-      module_type: OpticalWriter
+      module_type: SuperaWriter
       OutputFile: "optical.root"
       Collections: [
         { InputTag: "opflashCryoE::MCstage0" OutputLabel: "cryoE" },

@@ -103,3 +103,33 @@ Do not open upstream issues or mark fixes approved automatically.
 
 [speedup]: https://github.com/SBNSoftware/sbncode/commit/fb812f1431b207790483ab1d599c0bdee71b8f3a
 [sed]: https://github.com/DeepLearnPhysics/Supera/blob/9e7b533d44236c64ddc17748e92dbd9d2fbe0fae/SuperaSimEnergyDeposit.cxx
+
+## F-007: CRT timestamp names do not define a common clock contract
+
+- **Status:** observed producer-dependent semantics, not classified as a bug.
+- **Evidence:** ICARUS `v10_27_00`, `CRT/CRTUtils/CRTHitRecoAlg.cc` (`FillCRTHit`)
+  stores `time0 % 1000000000` in `ts0_ns`, while `CRTTrueHitRecoAlg.cc` stores its
+  full `time0` in the same field. The corrected seconds assignments also differ.
+- **Impact:** normalizing or adding fields based only on their names can change
+  timing in an overlay collection containing both source paths.
+- **Resolution:** preserve the five original readings and exact integer seconds;
+  label their reference as source-defined. No timing correction is approved.
+- **Tests:** independent field expectations and a 2^53+1 integer counter; exact
+  frozen-reference comparison of the resulting LArCV CRT product.
+- **Reviewer decision/upstream report:** none. Resolve actual producer epochs
+  before adding a normalized time or using these fields for matching.
+
+## F-008: auxiliary compatibility projection must reject information loss
+
+- **Status:** new local safeguards; reviewer acceptance pending.
+- **Scope:** the generalized model permits wider IDs, explicit signal units,
+  missing estimates, completeness, and timing uncertainty. LArCV2 CRTHit cannot
+  faithfully encode every such record. This is not a claim of corrupted baseline data.
+- **Resolution:** check the supported source contract and reject incompatible
+  quantities or narrowing before modifying output. Initialize every CRT field;
+  the LArCV2 default constructor initializes only its instance ID.
+- **Tests:** Atomic auxiliary writer contract checks unsupported units, precision,
+  range, required values, clocks, duplicate groups, and unsupported information;
+  independent readback verifies every serialized field and empty-event clearing.
+- **Reference impact:** intended to be none for the supported ICARUS sample.
+- **Reviewer decision/upstream report:** none.

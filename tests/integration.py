@@ -37,7 +37,7 @@ source: { module_type: EmptyEvent firstRun: 1 firstSubRun: 1 firstEvent: 1 }
 services: { scheduler: { num_threads: 1 num_schedules: 1 } }
 physics: {
  producers: { fixture: { module_type: OpticalFixture } }
- analyzers: { optical: { module_type: OpticalWriter OutputFile: OUTPUT Collections: COLLECTIONS } }
+ analyzers: { optical: { module_type: SuperaWriter OutputFile: OUTPUT Collections: COLLECTIONS } }
  produce: [fixture]
  output: [optical]
  trigger_paths: [produce]
@@ -97,9 +97,46 @@ def main():
         if not report["passed"]:
             raise RuntimeError("Reference mismatch")
         reports.append({key: value for key, value in report.items() if key != "records"})
+    auxiliary_config = (Path(__file__).resolve().parent.parent / "fcl/auxdet_icarus.fcl").read_text()
+    auxiliary_output = run_case(directory, "overlay-auxiliary", auxiliary_config, args.input.resolve(), len(ids))
+    auxiliary_reports = []
+    for index, reference in enumerate(args.reference):
+        report = compare(reference.resolve(), auxiliary_output, ids, auxiliary=True)
+        (directory / f"auxiliary-comparison-{index}.json").write_text(json.dumps(report, indent=2) + "\n")
+        if not report["passed"]:
+            raise RuntimeError("Auxiliary reference mismatch")
+        auxiliary_reports.append({key: value for key, value in report.items() if key != "records"})
     collections = '[{InputTag:"fixture:east" OutputLabel:"cryoE"},' \
                   '{InputTag:"fixture:west" OutputLabel:"cryoW"}]'
     inspect_fixture(run_case(directory, "empty-collections", fixture_config(collections)))
+    auxiliary = '[{Reader:"SbnCrtHit" InputTag:"fixture:auxiliary" OutputLabel:"crthit"}]'
+    combined = fixture_config(collections).replace("Collections:", "AuxiliaryCollections: " + auxiliary + " Collections:")
+    fixture = run_case(directory, "auxiliary-empty-collections", combined)
+    inspect_fixture(fixture)
+    file = ROOT.TFile.Open(str(fixture))
+    try:
+        tree = file.Get("crthit_crthit_tree")
+        if not tree or tree.GetEntries() != 3:
+            raise RuntimeError("Missing auxiliary fixture events")
+        for index, count in enumerate((1, 0, 1)):
+            if tree.GetEntry(index) <= 0:
+                raise RuntimeError("Unreadable auxiliary event")
+            record = getattr(tree, "crthit_crthit_branch")
+            if record.event() != index + 1 or len(record.as_vector()) != count:
+                raise RuntimeError("Stale auxiliary event")
+            if count:
+                hit = record.as_vector()[0]
+                if hit.id() != 0 or hit.ts0_s() != (1 << 53) + 1 or hit.peshit() != 12.5:
+                    raise RuntimeError("Auxiliary field mismatch")
+    finally:
+        file.Close()
+    for name, config, error in (
+        ("auxiliary-missing", combined.replace("fixture:auxiliary", "absent"), "ProductNotFound"),
+        ("auxiliary-reader", combined.replace('Reader:"SbnCrtHit"', 'Reader:"Unknown"'), "Unsupported auxiliary Reader"),
+        ("auxiliary-duplicate", combined.replace(auxiliary, auxiliary[:-1] + ',' + auxiliary[1:]), "outputs must be unique"),
+        ("auxiliary-empty-label", combined.replace('OutputLabel:"crthit"', 'OutputLabel:""'), "must be nonempty"),
+    ):
+        run_case(directory, name, config, error=error)
     failures = {
         "missing-product": (collections.replace("fixture:east", "absent"), "ProductNotFound"),
         "wrong-process": (collections.replace("fixture:east", "fixture:east:Wrong"), "ProductNotFound"),
@@ -119,7 +156,8 @@ def main():
         pass
     else:
         raise RuntimeError("Comparator accepted an intentionally wrong event count")
-    summary = {"passed": True, "reference_comparisons": reports,
+    summary = {"passed": True, "reference_comparisons": reports, "auxiliary_comparisons": auxiliary_reports,
+               "auxiliary_empty_sequence": "passed", "auxiliary_expected_failures": 4,
                "empty_collection_sequence": "passed", "expected_failures": len(failures) + 1,
                "comparator_wrong_count_rejected": True}
     (directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")

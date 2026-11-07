@@ -1,8 +1,8 @@
-"""Exact comparison of the two ICARUS optical LArCV products, excluding ROOT file metadata.
+"""Exact comparison of ICARUS optical and optional CRT products, excluding file metadata.
 
 Every product is read with its compiled dictionary and independently streamed
 into a fresh ROOT buffer. Compare bytes without tolerance or reordering. This
-includes event IDs, producer names, metadata, particles and every voxel value.
+includes event IDs, producer names, and every serialized field of the selected products.
 Unknown keys/classes, missing products, wrong counts, and invalid IDs fail closed.
 """
 import argparse
@@ -25,8 +25,8 @@ def load_comparator():
         raise RuntimeError('Cannot compile comparator')
 
 
-def compare(left, right, expected_ids):
-    rows = ROOT.supera_audit.compare(str(left), str(right), len(expected_ids))
+def compare(left, right, expected_ids, auxiliary=False):
+    rows = ROOT.supera_audit.compare(str(left), str(right), len(expected_ids), auxiliary)
     records = []
     for row in rows:
         record = {key: str(getattr(row, key)) for key in

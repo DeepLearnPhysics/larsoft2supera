@@ -1,6 +1,6 @@
 {
   "globs": ["**/*.md"],
-  "ignores": ["node_modules/**"],
+  "ignores": ["node_modules/**", "build/**"],
   "config": {
     "default": true,
     "MD013": {

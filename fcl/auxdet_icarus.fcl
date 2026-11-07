@@ -1,0 +1,21 @@
+process_name: AuxiliaryPort
+source: { module_type: RootInput }
+services: { scheduler: { num_threads: 1 num_schedules: 1 } }
+physics: {
+  analyzers: {
+    optical: {
+      module_type: SuperaWriter
+      OutputFile: "optical.root"
+      AuxiliaryCollections: [
+        { Reader: "SbnCrtHit" InputTag: "overlayCRTHit::Overlay" OutputLabel: "crthit"
+          Detector: "ICARUS" CoordinateFrame: "source" }
+      ]
+      Collections: [
+        { InputTag: "opflashCryoE::MCstage0" OutputLabel: "cryoE" },
+        { InputTag: "opflashCryoW::MCstage0" OutputLabel: "cryoW" }
+      ]
+    }
+  }
+  output: [optical]
+  end_paths: [output]
+}

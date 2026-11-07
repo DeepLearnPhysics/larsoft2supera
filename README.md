@@ -3,7 +3,7 @@
 LArSoft input adapter for [SuperaAtomic][atomic], enabling shared LArTPC
 voxelization and truth labeling across experiments.
 
-**Status: validated optical-port checkpoint; broader migration in progress.** The shared data
+**Status: optical and ICARUS auxiliary-detector checkpoints validated.** The shared data
 model and LArCV2 writer are coordinated changes in SuperaAtomic.
 The first target is ICARUS overlay data. Support for other experiments will be
 added through explicit input contracts and integration tests.
@@ -75,7 +75,8 @@ record. Broader behavior changes remain separate review decisions.
 ## Development
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for the review and testing requirements.
-See the [optical port review packet](docs/optical-port.md) for build instructions,
+See the [auxiliary port review packet](docs/auxiliary-port.md) for the current change
+and the [optical port review packet](docs/optical-port.md) for build instructions,
 contracts, safeguards, and validation limits. Local C++ and integration checks
 exist. Hosted C++ checks use a pinned Atomic revision; full ICARUS integration
 requires externally provisioned fixtures and a runner.

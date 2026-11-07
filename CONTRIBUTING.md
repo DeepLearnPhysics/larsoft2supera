@@ -13,6 +13,10 @@ Record reviewer acceptance before treating a migration stage as approved.
 
 ## Readable code and documentation
 
+Follow the [shared readability conventions](docs/readability.md): short purpose
+comments above logical steps, related statements together, and one blank line
+between steps. This applies to implementation and tests alike.
+
 - Use explicit names for physical quantities, units, coordinate frames, and IDs.
 - Prefer small functions with one coherent responsibility and explicit inputs.
 - Use value semantics and RAII; document ownership and event-scoped lifetimes.
