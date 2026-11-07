@@ -3,7 +3,8 @@
 LArSoft input adapter for [SuperaAtomic][atomic], enabling shared LArTPC
 voxelization and truth labeling across experiments.
 
-**Status: design and documentation.** No adapter modules have been implemented.
+**Status: validated optical-port checkpoint; broader migration in progress.** The shared data
+model and LArCV2 writer are coordinated changes in SuperaAtomic.
 The first target is ICARUS overlay data. Support for other experiments will be
 added through explicit input contracts and integration tests.
 
@@ -17,17 +18,17 @@ The long-term separation is:
 
 ```text
 LArSoft event products and services
-    -> larsoft2supera: extraction, units, identities, associations
-    -> SuperaAtomic: shared voxelization and labeling
-    -> independent output writer
+    -> larsoft2supera: native extraction and translation
+    -> SuperaAtomic: shared records and optional labeling
+    -> SuperaAtomic: selected output adapter (LArCV2 for this port)
 ```
 
 The adapter owns LArSoft-specific access and translation. Shared particle
 grouping, semantic priorities, and detector-independent algorithms belong in the
 core. **The migration will keep LArCV2 output throughout.** We will first reproduce
-the agreed LArCV2 products, then separate the output layer from SuperaAtomic.
-Writer extraction and a new output format are later changes, not prerequisites
-for this port. The exact interface is still under review: SuperaAtomic's current
+the agreed LArCV2 products through a separate optional output component in Atomic.
+The data/output dependency boundary is established now; a new output format is
+deferred. The exact interface is still under review: SuperaAtomic's current
 input model does not yet describe all the
 reconstructed, optical, and CRT information needed by the legacy workflow.
 
@@ -65,15 +66,19 @@ Large event files and the local experiment environment remain outside this repo.
 
 The first implementation target is event identity and optical-flash extraction,
 with a small, framework-independent conversion function and a thin art wrapper.
-Each implementation step will be committed with its contract and tests for review
-before progressing to harder modules.
+The [optical input audit](docs/optical-audit.md) also tracks information outside
+the flash fields, including associations and possible truth inputs. Field-copy
+parity alone will not establish complete optical support.
+Each functionality addition is a cohesive commit with its tests and migration
+record. Broader behavior changes remain separate review decisions.
 
 ## Development
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for the review and testing requirements.
-The initial CI checks Markdown. C++ builds, static analysis, unit tests, coverage,
-and LArSoft integration checks must arrive with the first executable component;
-they are not implemented or claimed by this documentation-only foundation.
+See the [optical port review packet](docs/optical-port.md) for build instructions,
+contracts, safeguards, and validation limits. Local C++ and integration checks
+exist. Hosted C++ checks use a pinned Atomic revision; full ICARUS integration
+requires externally provisioned fixtures and a runner.
 
 With Node.js 22 or newer and npm installed:
 

@@ -7,10 +7,13 @@ The initial foundation and beginning the implementation were authorized on
 does not mean that future behavior changes have been approved. Complex stages
 should span several focused, tested commits.
 
+The optical checkpoint was authorized for commit and publication on 2026-11-07.
+Further functionality additions remain staged for review.
+
 **Output decision:** retain LArCV2 throughout the parity migration. First reproduce
-the agreed LArCV2 products; then excise the output layer from SuperaAtomic in a
-separate change. Keep output calls localized so that later separation is tractable,
-without requiring a new output schema or writer framework at the outset.
+the agreed LArCV2 products. The revised architecture establishes output-independent
+Atomic records and a separate optional writer target now; a replacement format
+remains deferred. See the [optical port](optical-port.md).
 
 | Stage | Scope | Evidence needed before proceeding |
 | --- | --- | --- |
@@ -47,8 +50,11 @@ The first change should contain:
 5. C++ formatting/static analysis, a pinned build, test execution, and a coverage
    report in CI. No success badge based only on documentation lint.
 
-The proposed first step is extraction, not a promise that Atomic already accepts
-flash records. Its current interface needs an explicit auxiliary-data decision.
+The local v2 Atomic data component now defines flash records and an optical event
+envelope. Its existing particle labeling API is unchanged during this first slice.
+The [optical audit](optical-audit.md) expands this review beyond field-copy parity:
+inventory associations, available truth, producer defaults, and information the
+legacy writer does not represent. A compatibility test cannot approve an omission.
 
 ## Review packet for every behavior
 

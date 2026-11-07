@@ -1,7 +1,8 @@
 # Findings ledger
 
 This ledger separates observations from confirmed bugs. No legacy behavior has
-been fixed by this repository yet. Reports should remain useful to upstream
+been approved as fixed by the reviewer yet. Local safeguards are identified below.
+Reports should remain useful to upstream
 maintainers without requiring access to this conversation.
 
 ## Status and reporting rules
@@ -59,6 +60,46 @@ Do not open upstream issues or mark fixes approved automatically.
 - **Next evidence:** trace source identities, rejected deposits, and energy
   accounting for one small example. Confirm units rather than assuming them.
 - **Fix/test/reviewer decision/upstream report:** none yet.
+
+## F-004: optical relationships omitted by legacy extraction
+
+- **Status:** observed omission; desired output contract under review.
+- **Evidence:** the [optical audit](optical-audit.md) found 254 flashes and 82,315
+  dereferenceable flash-to-hit links across the ten cached events. SuperaOptical
+  copies the flash fields but does not read those links or extract optical truth.
+- **Impact:** reproducing legacy Flash objects alone cannot demonstrate complete
+  optical input support. Persisted CRT matches also need a separate review.
+- **Next evidence:** define relationship identities, retained hit attributes, and
+  output representation. Review the available photon truth before choosing a
+  matching policy; do not infer that every missing MC match is real data.
+- **Fix/test/reviewer decision/upstream report:** none yet; runtime inventory is
+  evidence of availability, not a test of a new adapter.
+
+## F-005: signed photon mother IDs require an explicit resolution policy
+
+- **Status:** observed convention; not classified as a bug.
+- **Evidence:** 169,190 of 639,997 photons have mother IDs absent from the
+  `simplemerge` particles by exact signed lookup, but present with opposite sign.
+  None of those exact signed IDs are in the dropped-particle collection.
+- **Impact:** naive exact-ID matching loses contributions; blindly discarding
+  the sign could conceal simulation semantics. Neither policy is approved.
+- **Next evidence:** trace simulation ID assignment, overlay shifts and merging;
+  validate identity and ancestry resolution on independent synthetic examples.
+- **Fix/test/reviewer decision/upstream report:** none yet.
+
+## F-006: duplicate optical output labels overwrite a collection
+
+- **Status:** locally fixed; reviewer acceptance pending.
+- **Baseline:** pinned SuperaOptical loops over input/output pairs and obtains the
+  same EventFlash for duplicate output labels. Its second `emplace` replaces the
+  first collection; configuration checks only the two lists' lengths.
+- **Impact:** a misconfigured job can silently lose one collection.
+- **Resolution:** the art composition and Atomic output component reject empty or
+  duplicate collection names before opening an output file.
+- **Test:** `duplicate-output` in the art suite requires the specific configuration
+  failure; the Atomic writer contract test independently checks duplicate names.
+- **Reference impact:** none; the frozen cryostat output labels are distinct.
+- **Upstream report/reviewer decision:** none yet.
 
 [speedup]: https://github.com/SBNSoftware/sbncode/commit/fb812f1431b207790483ab1d599c0bdee71b8f3a
 [sed]: https://github.com/DeepLearnPhysics/Supera/blob/9e7b533d44236c64ddc17748e92dbd9d2fbe0fae/SuperaSimEnergyDeposit.cxx

@@ -1,0 +1,28 @@
+name: C++ checks (coordinated v2)
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  optical:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: DeepLearnPhysics/SuperaAtomic
+          ref: 5917c0f9efcbefa1644e4295dd3ef0e228868fd3
+          path: build/deps/SuperaAtomic
+          persist-credentials: false
+      - name: Build pinned check tools
+        run: docker build -t larsoft2supera-checks -f tools/Dockerfile .
+      - name: Check adapter without ROOT, LArCV, or art
+        run: >-
+          docker run --rm -v "$PWD:/work"
+          -e SUPERA_SOURCE=/work/build/deps/SuperaAtomic
+          larsoft2supera-checks bash tools/checks.sh

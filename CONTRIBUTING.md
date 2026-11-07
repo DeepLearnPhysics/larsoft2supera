@@ -27,7 +27,8 @@ Record reviewer acceptance before treating a migration stage as approved.
 
 ## Testing and CI
 
-The current workflow validates documentation only. No executable adapter exists.
+The first optical component has local C++ and art integration checks. See the
+[review packet](docs/optical-port.md) for execution and hosted CI limitations.
 
 The first executable component must add a supported, reproducible build and:
 

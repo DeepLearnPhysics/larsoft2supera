@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+find_package(cetmodules 3.20 REQUIRED)
+project(OpticalConsumer VERSION 0.1.0 LANGUAGES CXX)
+include(CetCMakeEnv)
+cet_cmake_env()
+find_package(larsoft2supera CONFIG REQUIRED)
+add_executable(consumer main.cxx)
+target_link_libraries(consumer PRIVATE larsoft2supera::optical)

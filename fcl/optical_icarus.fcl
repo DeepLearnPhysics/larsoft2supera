@@ -1,0 +1,17 @@
+process_name: OpticalPort
+source: { module_type: RootInput }
+services: { scheduler: { num_threads: 1 num_schedules: 1 } }
+physics: {
+  analyzers: {
+    optical: {
+      module_type: OpticalWriter
+      OutputFile: "optical.root"
+      Collections: [
+        { InputTag: "opflashCryoE::MCstage0" OutputLabel: "cryoE" },
+        { InputTag: "opflashCryoW::MCstage0" OutputLabel: "cryoW" }
+      ]
+    }
+  }
+  output: [optical]
+  end_paths: [output]
+}

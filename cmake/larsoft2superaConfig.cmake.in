@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(lardataobj)
+find_dependency(Supera 2 CONFIG COMPONENTS data)
+include("${CMAKE_CURRENT_LIST_DIR}/opticalTargets.cmake")
