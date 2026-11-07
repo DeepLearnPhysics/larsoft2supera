@@ -15,7 +15,7 @@ export LARDATAOBJ_SOURCE=${LARDATAOBJ_SOURCE:-$PWD/build/deps/lardataobj}
 export SBNOBJ_SOURCE=${SBNOBJ_SOURCE:-$PWD/build/deps/sbnobj}
 export SUPERA_SOURCE=${SUPERA_SOURCE:-$PWD/build/deps/SuperaAtomic}
 fetch_source "$SUPERA_SOURCE" https://github.com/DeepLearnPhysics/SuperaAtomic.git \
-  77953b3ab72e139c28772004ddc3c8a94bc602b9
+  f80ee2c124cda0f70c07038e273440b6450cd9bf
 fetch_source "$LARDATAOBJ_SOURCE" https://github.com/LArSoft/lardataobj.git \
   949008add3a77ef7d532536d8e7b7343cb5e9190
 fetch_source "$SBNOBJ_SOURCE" https://github.com/SBNSoftware/sbnobj.git \

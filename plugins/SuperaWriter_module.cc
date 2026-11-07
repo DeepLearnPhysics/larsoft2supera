@@ -10,12 +10,32 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "supera/io/larcv2/Writer.h"
 
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include <sstream>
+
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace larsoft2supera {
+namespace {
+void report_normalization(const NormalizationReport &report, const art::Event &event,
+                          const std::string &source) {
+  if (report.examples.empty())
+    return;
+  std::ostringstream message;
+  message << "event=" << event.id() << " source=" << source << " sentinels=" << report.counts[0]
+          << " nan=" << report.counts[1] << " infinity=" << report.counts[2];
+  for (const auto &example : report.examples)
+    message << "\nrecord=" << example.record << " particle=" << example.particle
+            << " step=" << example.step << " field=" << example.field << " reason="
+            << (example.reason == MissingReason::SourceSentinel ? "source-sentinel"
+                : example.reason == MissingReason::NotANumber   ? "nan"
+                                                                : "infinity");
+  mf::LogInfo("SuperaNormalization") << message.str();
+}
+} // namespace
 
 // Serial analyzer: owns one LArCV2 writer, whose mutable state is not thread-safe.
 // This temporary writer keeps the conversion independent of art event access.
@@ -150,16 +170,20 @@ void SuperaWriter::analyze(const art::Event &event) {
   // Resolve and translate the optical collections first.
   record.optical.reserve(inputs_.size());
   for (std::size_t i = 0; i < inputs_.size(); ++i) {
+    NormalizationReport report;
     const auto flashes = event.getValidHandle<std::vector<recob::OpFlash>>(inputs_[i]);
     record.optical.push_back(
-        {outputs_[i], inputs_[i].encode(), conventions_[i], convert_flashes(*flashes)});
+        {outputs_[i], inputs_[i].encode(), conventions_[i], convert_flashes(*flashes, &report)});
+    report_normalization(report, event, inputs_[i].encode());
   }
 
   // Resolve auxiliary inputs before handing any part of the event to the sink.
   for (std::size_t i = 0; i < auxiliary_inputs_.size(); ++i) {
+    NormalizationReport report;
     const auto hits = event.getValidHandle<std::vector<sbn::crt::CRTHit>>(auxiliary_inputs_[i]);
     record.auxiliary.push_back({auxiliary_outputs_[i], auxiliary_inputs_[i].encode(),
-                                auxiliary_conventions_[i], convert_crt_hits(*hits)});
+                                auxiliary_conventions_[i], convert_crt_hits(*hits, &report)});
+    report_normalization(report, event, auxiliary_inputs_[i].encode());
   }
 
   // Build all source records before applying the detector-independent selection.
@@ -170,14 +194,17 @@ void SuperaWriter::analyze(const art::Event &event) {
     for (std::size_t source_index = 0; source_index < definition.inputs.size(); ++source_index) {
       const auto &input = definition.inputs[source_index];
       supera::GeneratorSource source;
-      source.source_index = source_index;
+      source.source_index = supera::record_index(source_index);
       source.source = input.tag.encode();
       const auto handle = event.getHandle<std::vector<simb::MCTruth>>(input.tag);
       source.present = handle.isValid();
       if (!source.present && input.required)
         throw std::runtime_error("Required generator product missing: " + source.source);
-      if (source.present)
-        source.records = convert_generator(*handle);
+      if (source.present) {
+        NormalizationReport report;
+        source.records = convert_generator(*handle, &report);
+        report_normalization(report, event, source.source);
+      }
       collection.sources.push_back(std::move(source));
     }
     record.generator.push_back(supera::select_generator(std::move(collection), definition.origin));

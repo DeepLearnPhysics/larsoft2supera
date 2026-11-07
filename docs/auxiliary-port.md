@@ -51,7 +51,7 @@ explicit input tag is `overlayCRTHit::Overlay`.
 | `pesmap` | Readout groups and channel signals in PE | Preserve empty groups, channel order and duplicate channels |
 | `ts0_s` | Unsigned 64-bit reading in seconds | No conversion through double |
 | Other four timestamp fields | Named double readings in source units | No epoch inference, correction, or recombination |
-| `plane`, `tagger` | Plane and region annotations | Preserve raw source values |
+| `plane`, `tagger` | Plane and region annotations | Normalize missing plane; preserve region |
 | No completeness field | Absent `complete` | Do not assume a complete 3D reconstruction |
 
 Hardware IDs are not geometry indices. No geometry lookup is performed; physical
@@ -59,10 +59,10 @@ AuxDet/AuxDetSensitive references are deferred until a reader can provide them.
 The collection records detector and coordinate-frame context. The shipped FHiCL
 uses `source` for the frame: no coordinate transformation is implied.
 
-Source sentinels remain numeric sentinels; optional absence represents an estimate
-that a reader does not supply, not a newly inferred physical-validity decision.
-Floating NaNs remain NaNs; no portable preservation of arbitrary NaN payload bits
-is claimed. Records own their values and remain valid after input destruction.
+Source absence and nonfinite values follow [the validity contract](validity.md).
+Missing records remain optional; missing floating components use NaN. Exact integer
+clock absence is explicit. No preservation of arbitrary NaN payload bits is claimed.
+Records own their values and remain valid after input destruction.
 
 ### Timestamp caution
 
@@ -111,7 +111,7 @@ script now runs both ports. `SBNOBJ_SOURCE` optionally selects the pinned sbnobj
 checkout for fast checks; otherwise the script fetches it.
 
 **Coordinated dependency:** this adapter pins Atomic
-`77953b3ab72e139c28772004ddc3c8a94bc602b9` in `tools/checks.sh` and both C++
+`f80ee2c124cda0f70c07038e273440b6450cd9bf` in `tools/checks.sh` and both C++
 workflows. Install that revision before building this checkpoint. Full ICARUS
 integration uses externally provisioned fixtures; local results below do not
 imply that the self-hosted integration workflow has run.

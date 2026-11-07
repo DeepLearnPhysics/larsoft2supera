@@ -10,7 +10,9 @@
 #include "larcv/core/DataFormat/EventNeutrino.h"
 #include "larcv/core/DataFormat/EventParticle.h"
 #include <algorithm>
+#include <cmath>
 #include <cstring>
+#include <limits>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -23,6 +25,7 @@ struct Row {
   Long64_t entry;
   int left_bytes, right_bytes, first_difference;
   bool equal;
+  std::vector<std::string> normalized_fields;
 };
 
 std::string event_id(const larcv::EventBase *p) {
@@ -60,7 +63,8 @@ std::map<std::string, std::string> branches(TTree &t) {
 }
 
 std::vector<Row> compare(const char *left, const char *right, Long64_t expected_entries,
-                         bool auxiliary = false, bool generator = false) {
+                         bool auxiliary = false, bool generator = false,
+                         bool normalize_crt = false) {
   std::unique_ptr<TFile> a(TFile::Open(left)), b(TFile::Open(right));
   if (!a || !b || a->IsZombie() || b->IsZombie())
     throw std::runtime_error("Cannot open input files");
@@ -101,6 +105,25 @@ std::vector<Row> compare(const char *left, const char *right, Long64_t expected_
       for (Long64_t i = 0; i < expected_entries; ++i) {
         if (ba->GetEntry(i) <= 0 || bb->GetEntry(i) <= 0)
           throw std::runtime_error("Failed reading " + key.first);
+        // Normalize only the reference, and expose every changed field for an
+        // exact fixture allowlist check. The original file is never modified.
+        std::vector<std::string> normalized;
+        if (normalize_crt && item.second == "larcv::EventCRTHit") {
+          auto *record = static_cast<larcv::EventCRTHit *>(oa);
+          auto hits = record->as_vector();
+          for (std::size_t index = 0; index < hits.size(); ++index) {
+            auto &hit = hits[index];
+            if (hit.x_err() == std::numeric_limits<float>::infinity()) {
+              hit.x_err(std::numeric_limits<float>::lowest());
+              normalized.push_back(event_id(record) + ":" + std::to_string(index) + ":x_err");
+            }
+            if (hit.z_err() == std::numeric_limits<float>::infinity()) {
+              hit.z_err(std::numeric_limits<float>::lowest());
+              normalized.push_back(event_id(record) + ":" + std::to_string(index) + ":z_err");
+            }
+          }
+          record->set(hits);
+        }
         TBufferFile sa(TBuffer::kWrite), sb(TBuffer::kWrite);
         sa.WriteObjectAny(oa, cl);
         sb.WriteObjectAny(ob, cl);
@@ -114,7 +137,7 @@ std::vector<Row> compare(const char *left, const char *right, Long64_t expected_
         auto *ea = static_cast<larcv::EventBase *>(cl->DynamicCast(base, oa));
         auto *eb = static_cast<larcv::EventBase *>(cl->DynamicCast(base, ob));
         rows.push_back({key.first, item.first, item.second, event_id(ea), event_id(eb), i,
-                        sa.Length(), sb.Length(), first, equal});
+                        sa.Length(), sb.Length(), first, equal, normalized});
       }
       ta->ResetBranchAddresses();
       tb->ResetBranchAddresses();

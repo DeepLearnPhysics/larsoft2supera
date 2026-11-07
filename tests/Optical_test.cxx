@@ -14,7 +14,7 @@ void require(bool condition, const std::string &description) {
 }
 
 bool same_bits(double left, double right) {
-  // This test deliberately distinguishes signed zero and preserves NaN bits.
+  // This test deliberately distinguishes signed zero and checks finite values exactly.
   // NOLINTNEXTLINE(bugprone-suspicious-memory-comparison)
   return std::memcmp(&left, &right, sizeof(double)) == 0;
 }
@@ -64,14 +64,13 @@ void numerical_values_are_not_filtered() {
   const auto &flash = output.front();
   require(same_bits(flash.time_us, -0.0), "negative zero time");
   require(flash.time_width_us == -1.0, "negative widths are not silently corrected");
-  require(flash.absolute_time == infinity && flash.y_cm == -infinity, "infinities");
+  require(std::isnan(flash.absolute_time) && std::isnan(flash.y_cm), "infinities");
   require(flash.frame == std::numeric_limits<unsigned int>::max(), "maximum frame");
   require(!flash.in_beam_frame && flash.on_beam_time == 0, "false beam flags");
-  require(same_bits(flash.fast_to_total, nan), "NaN representation");
-  require(flash.x_cm == recob::OpFlash::NoCenter && flash.x_width_cm == recob::OpFlash::NoCenter,
-          "missing x sentinel");
+  require(std::isnan(flash.fast_to_total), "NaN representation");
+  require(std::isnan(flash.x_cm) && std::isnan(flash.x_width_cm), "missing x sentinel");
   require(same_bits(flash.z_width_cm, -0.0), "negative zero width");
-  require(same_bits(flash.pe[0], nan) && same_bits(flash.pe[1], -0.0) && flash.pe[2] == -2.0,
+  require(std::isnan(flash.pe[0]) && same_bits(flash.pe[1], -0.0) && flash.pe[2] == -2.0,
           "PE values are copied without cleaning");
   require(flash.wire_centers.empty() && flash.wire_widths.empty(), "empty wire vectors");
   const recob::OpFlash no_vectors(0., 0., 0., 0, {}, false, 0, 1., 0., 0., 0., 0., 0., 0.);

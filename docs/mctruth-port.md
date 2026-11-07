@@ -5,6 +5,10 @@ Status: checkpoint approved for commit and publication on 2026-11-07. Baseline: 
 `v1_29_04`, LArCV2 `v2_2_6`. The inspected baseline `SuperaMCTruth.cxx` is identical
 to the corresponding file in the local Supera checkout.
 
+Current validity normalization is specified in [the validity contract](validity.md).
+The historical behavior below remains the compatibility audit, not the internal
+missing-value standard.
+
 ## What the legacy processor does
 
 The effective configuration reads `generator` then `cosmgen`, accepts every
@@ -104,7 +108,7 @@ zero-means-all setting into the new configuration. The supplied overlay FHiCL
 omits it, preserving the baseline selection.
 
 The coordinated Atomic dependency is
-`77953b3ab72e139c28772004ddc3c8a94bc602b9`, pinned in the fast-check script and
+`f80ee2c124cda0f70c07038e273440b6450cd9bf`, pinned in the fast-check script and
 both adapter C++ workflows. Full ICARUS integration requires externally
 provisioned fixtures; the local results do not imply a hosted integration run.
 

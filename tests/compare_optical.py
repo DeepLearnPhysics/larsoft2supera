@@ -25,14 +25,15 @@ def load_comparator():
         raise RuntimeError('Cannot compile comparator')
 
 
-def compare(left, right, expected_ids, auxiliary=False, generator=False):
-    rows = ROOT.supera_audit.compare(str(left), str(right), len(expected_ids), auxiliary, generator)
+def compare(left, right, expected_ids, auxiliary=False, generator=False, normalize_crt=False):
+    rows = ROOT.supera_audit.compare(str(left), str(right), len(expected_ids), auxiliary, generator, normalize_crt)
     records = []
     for row in rows:
         record = {key: str(getattr(row, key)) for key in
                   ('tree', 'branch', 'type', 'left_id', 'right_id')}
         record.update({key: int(getattr(row, key)) for key in
                        ('entry', 'left_bytes', 'right_bytes', 'first_difference')})
+        record['normalized_fields'] = [str(field) for field in row.normalized_fields]
         record['equal'] = bool(row.equal)
         record['expected_id'] = expected_ids[row.entry]
         record['ids_valid'] = record['left_id'] == record['right_id'] == record['expected_id']
@@ -58,3 +59,18 @@ if __name__ == '__main__':
     Path(args.report).write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({k: v for k, v in result.items() if k != 'records'}, indent=2))
     raise SystemExit(0 if result['passed'] else 1)
+
+
+def compare_reference(left, right, expected_ids, generator=False):
+    """Require byte equality except for the enumerated baseline infinity fixes."""
+    raw = compare(left, right, expected_ids, auxiliary=True, generator=generator)
+    normalized = compare(left, right, expected_ids, auxiliary=True, generator=generator,
+                         normalize_crt=True)
+    expected = json.loads((Path(__file__).parent / "expected_crt_normalization.json").read_text())
+    actual = [field for row in normalized['records'] for field in row['normalized_fields']]
+    normalized['passed'] = normalized['passed'] and actual == expected
+    normalized['raw_passed'] = raw['passed']
+    normalized['raw_records'] = raw['records']
+    normalized['expected_normalizations'] = len(expected)
+    normalized['actual_normalizations'] = actual
+    return normalized

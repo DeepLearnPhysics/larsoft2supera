@@ -1,7 +1,7 @@
 cet_build_plugin(SuperaWriter art::module BASENAME_ONLY
   LIBRARIES PRIVATE larsoft2supera::optical larsoft2supera::auxiliary larsoft2supera::generator art::Framework_Core
   art::Framework_Principal canvas::canvas fhiclcpp::fhiclcpp
-  supera::larcv2)
+  supera::larcv2 messagefacility::MF_MessageLogger)
 if(BUILD_TESTING)
   cet_build_plugin(OpticalFixture art::module BASENAME_ONLY NO_INSTALL
     SOURCE ../tests/OpticalFixture_module.cc

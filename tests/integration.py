@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import subprocess
 
-from compare_optical import compare, load_comparator
+from compare_optical import compare_reference, compare, load_comparator
 from comparator_checks import check_comparator
 import ROOT
 
@@ -101,7 +101,7 @@ def main():
     auxiliary_output = run_case(directory, "overlay-auxiliary", auxiliary_config, args.input.resolve(), len(ids))
     auxiliary_reports = []
     for index, reference in enumerate(args.reference):
-        report = compare(reference.resolve(), auxiliary_output, ids, auxiliary=True)
+        report = compare_reference(reference.resolve(), auxiliary_output, ids)
         (directory / f"auxiliary-comparison-{index}.json").write_text(json.dumps(report, indent=2) + "\n")
         if not report["passed"]:
             raise RuntimeError("Auxiliary reference mismatch")
@@ -110,7 +110,7 @@ def main():
     generator_output = run_case(directory, "overlay-generator", generator_config, args.input.resolve(), len(ids))
     generator_reports = []
     for index, reference in enumerate(args.reference):
-        report = compare(reference.resolve(), generator_output, ids, auxiliary=True, generator=True)
+        report = compare_reference(reference.resolve(), generator_output, ids, generator=True)
         (directory / f"generator-comparison-{index}.json").write_text(json.dumps(report, indent=2) + "\n")
         if not report["passed"]:
             raise RuntimeError("Generator reference mismatch")

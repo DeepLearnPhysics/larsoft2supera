@@ -9,8 +9,9 @@ associations, CRT matches, or optical truth. The [audit](optical-audit.md) retai
 those future opportunities and unresolved upstream conventions.
 
 The extraction function returns `supera::OpticalFlash` values from Atomic's shared
-data component. It preserves all stored fields, vector order, numeric values,
-NaNs, signed zeros, and sentinels. IDs restart at zero per collection. The returned
+data component. It preserves fields, vector order, finite values and signed zeros.
+Native absence and nonfinite measurements follow [the validity contract](validity.md).
+IDs restart at zero per collection. The returned
 vectors own their contents and do not retain art handles or references.
 
 The art module assembles `supera::EventRecord` and calls Atomic's `EventWriter`
@@ -43,7 +44,7 @@ The configuration safeguards do not change the frozen sample's output.
 ## Builds
 
 The two repositories are a coordinated checkpoint. This adapter pins Atomic
-`77953b3ab72e139c28772004ddc3c8a94bc602b9` in CI and the fast-check script.
+`f80ee2c124cda0f70c07038e273440b6450cd9bf` in CI and the fast-check script.
 Install that revision before configuring against the shared v2 data API.
 
 The default build uses installed art/lardataobj and enables the composed LArCV2

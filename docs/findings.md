@@ -200,3 +200,71 @@ Do not open upstream issues or mark fixes approved automatically.
 - **Test:** two interactions and multiple particles read back from both trees;
   every object keeps the pinned sentinel while event IDs remain correct.
 - **Reviewer decision/upstream report:** output correction deferred; none.
+
+## F-014: voxel shifts narrow valid large IDs to signed int
+
+- **Status:** reproduced in pinned LArCV2 and pre-fix Atomic; local Atomic fix under review.
+- **Evidence:** the configured 6144³ grid has 231,928,233,984 cells. Both `shift`
+  implementations start with `int id = origin_id`. For voxel `(0,0,100)`, ID
+  3,774,873,600, a zero shift returns the invalid sentinel rather than the same ID.
+- **Resolution:** Atomic now decodes the full-width origin and bounds-checks signed
+  offsets before unsigned arithmetic. No change to coordinate indexing or LArCV2.
+- **Tests:** high-ID identity/round trip, each axis boundary, extreme signed offsets,
+  invalid origins, uninitialized grid, and exhaustive neighbors on a 2×3×4 grid.
+- **Scope:** the migrated optical/auxiliary/generator outputs do not call `shift`.
+  Broader labeling impact needs the relevant integration fixtures; no claim of
+  complete labeling parity is made.
+- **Reviewer decision/upstream report:** pending; none.
+
+## F-015: space-point fields contain producer-specific charge encodings
+
+- **Status:** confirmed convention, not classified as a producer bug.
+- **Evidence:** pinned ICARUS cluster3D writes charge into `ErrXYZ()[1]` and charge
+  asymmetry into `[3]`; pinned Supera reads those entries accordingly. It computes
+  asymmetry but does not serialize its tensor. `StoreWireInfo` is not consulted;
+  the `DropOutput` pattern controls that behavior.
+- **Impact:** treating these values as a generic covariance matrix is incorrect.
+  Copying the interpretation to another SpacePoint producer is unsafe.
+- **Next step:** name the input convention explicitly, retain source identity,
+  and separate native extraction from shared selection and output policy.
+- **Test/evidence:** the cached sample's selected charge is reproduced for
+  6,163,365 voxels; other output attributes still require port validation.
+- **Reviewer decision/upstream report:** pending; none.
+
+## F-016: malformed space-point associations can leave partial voxel updates
+
+- **Status:** source-confirmed update ordering; no affected points seen in the sample.
+- **Evidence:** charge and chi-square are replaced before the more-than-three-hit
+  rejection. Invalid planes are skipped individually; repeated planes can overwrite
+  prior values and bypass missing-plane filling. Cryostat/TPC retain the last hit.
+- **Impact:** outputs can describe different representatives or incomplete topology
+  despite a log saying a point was dropped.
+- **Next step:** validate candidate associations before committing a representative;
+  test malformed cases explicitly and document deliberate differences from legacy.
+- **Runtime scope:** zero oversized, duplicate-plane, invalid-plane or mixed-TPC
+  associations in the audited 8,839,871 points. This is not a general guarantee.
+- **Fix/reviewer decision/upstream report:** none yet; do not silently change policy.
+
+## F-017: source invalidity leaked into shared records
+
+- **Evidence:** OpFlash reserves double max for missing x information; SBN CRT
+  reserves float/double lowest, uint64 max and plane -1. nusimdata uses INT_MIN
+  for unset codes and double min for neutrino kinematics. The initial converters
+  copied these values into apparently populated shared fields.
+- **Resolution:** normalize at the input boundary using `supera/data/Validity.h`.
+  Preserve valid negative source IDs using optional signed integers. Emit bounded
+  source/event diagnostics; keep destination-specific encodings in the writer.
+- **Validation:** native default and nonfinite fixtures, partial vectors, exact
+  integer clocks, signed IDs, checked index ranges and writer readback tests.
+
+## F-018: infinite CRT position uncertainties in the reference sample
+
+- **Evidence:** both immutable references contain positive infinity in x and z
+  errors for 12 hits, totaling 24 fields. The exact list is stored in
+  `tests/expected_crt_normalization.json`; source-event reports identify infinity.
+- **Resolution:** these values become canonical missing measurements and then the
+  explicit LArCV2 CRT float missing value. No finite estimate is fabricated.
+- **Validation:** retain raw mismatches; require exact serialized equality after
+  only the enumerated reference transformations. Controls detect unrelated changes.
+- **Scope:** this establishes unusable uncertainty values, not their producer-side
+  root cause. No reconstruction or uncertainty-estimation algorithm is changed.

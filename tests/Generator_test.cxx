@@ -67,15 +67,15 @@ int main() try {
 
   // Verify interaction metadata and every retained incoming trajectory component.
   const auto &nu = *output[0].neutrino;
-  require(nu.incoming.track_id == -7 && !nu.incoming.particle_index && nu.incoming.pdg == 14 &&
-              nu.incoming.process == "primary" && nu.lepton_track_id == 9,
+  require(nu.incoming.track_id == -7 && nu.incoming.particle_index == supera::missing_index &&
+              nu.incoming.pdg == 14 && nu.incoming.process == "primary" && nu.lepton_track_id == 9,
           "Neutrino identity");
   require(nu.current == 0 && nu.mode == 1 && nu.interaction_type == 1001 &&
               nu.target == 1000180400 && nu.nucleon == 2212 && nu.quark == 2,
           "Interaction codes");
   require(nu.hadronic_mass_gev == 1.5 && nu.bjorken_x == 0.25 && nu.inelasticity == 0.5 &&
               nu.momentum_transfer_gev2 == 0.75 && nu.theta_rad &&
-              std::abs(*nu.theta_rad - std::acos(0.)) < 1.e-14,
+              std::abs(nu.theta_rad - std::acos(0.)) < 1.e-14,
           "Interaction kinematics");
   require(nu.trajectory.size() == 2 &&
               nu.trajectory[1].position_cm == std::array<double, 3>{5., 6., 7.} &&
@@ -111,12 +111,58 @@ int main() try {
   no_lepton_trajectory.Add(simb::MCParticle(9, 13, "primary", -7, 0.105, 1));
   no_lepton_trajectory.SetNeutrino(0, 0, 1001, 1000180400, 2212, 0, 0., 0., 0., 0.);
   auto no_theta = larsoft2supera::convert_generator({no_lepton_trajectory});
-  require(no_theta[0].neutrino && !no_theta[0].neutrino->theta_rad, "Absent theta");
+  require(no_theta[0].neutrino && std::isnan(no_theta[0].neutrino->theta_rad), "Absent theta");
   supera::GeneratorCollection malformed_neutrino{"mpv", {{0, "test", true, no_theta}}};
   rejects([&] { supera::select_generator(malformed_neutrino); });
   require(supera::select_generator(malformed_neutrino, 2).sources[0].records.empty(),
           "Filtered malformed interaction");
 
+  // Native default codes are absent; legitimate negative IDs remain present.
+  simb::MCTruth defaults;
+  defaults.Add(simb::MCParticle{});
+  larsoft2supera::NormalizationReport report;
+  const auto normalized = larsoft2supera::convert_generator({defaults}, &report);
+  const auto &unknown = normalized[0].particles[0];
+  require(!unknown.track_id && !unknown.status && unknown.pdg == supera::unspecified_pdg &&
+              report.counts[0] == 3,
+          "Native default particle codes");
+
+  // The neutrino constructor uses positive double::min(), not lowest().
+  simb::MCTruth unknown_nu;
+  unknown_nu.Add(incoming);
+  unknown_nu.Add(lepton);
+  const auto missing_code = std::numeric_limits<int>::min();
+  const auto missing_number = std::numeric_limits<double>::min();
+  unknown_nu.SetNeutrino(missing_code, missing_code, missing_code, missing_code, missing_code,
+                         missing_code, missing_number, missing_number, missing_number,
+                         missing_number);
+  const auto unknown_interaction = larsoft2supera::convert_generator({unknown_nu});
+  const auto &unknown_fields = *unknown_interaction[0].neutrino;
+  require(!unknown_fields.current && !unknown_fields.mode && !unknown_fields.target &&
+              std::isnan(unknown_fields.hadronic_mass_gev) &&
+              std::isnan(unknown_fields.bjorken_x) && std::isnan(unknown_fields.inelasticity) &&
+              std::isnan(unknown_fields.momentum_transfer_gev2),
+          "Neutrino codes and kinematics normalize independently");
+
+  simb::MCTruth edges;
+  simb::MCParticle signed_id(-1, -11, "test", -1, 0., 1);
+  signed_id.AddTrajectoryPoint({std::numeric_limits<double>::infinity(), 2., 3., -1.},
+                               {0., 0., 1., 1.});
+  edges.Add(signed_id);
+  const auto edge_records = larsoft2supera::convert_generator({edges});
+  require(edge_records[0].particles[0].track_id == -1 &&
+              std::isnan(edge_records[0].particles[0].initial->position_cm[0]) &&
+              edge_records[0].particles[0].initial->position_cm[1] == 2.,
+          "Negative identity and partial position");
+  // ROOT's zero-vector angle is not a measured direction. Keep it missing.
+  simb::MCTruth zero_direction;
+  simb::MCParticle zero_incoming(1, 14, "primary", -1, 0., 0);
+  zero_incoming.AddTrajectoryPoint({0., 0., 0., 0.}, {0., 0., 0., 1.});
+  zero_direction.Add(zero_incoming);
+  zero_direction.Add(lepton);
+  zero_direction.SetNeutrino(0, 0, 0, 0, 0, 0, 0., 0., 0., 0.);
+  const auto zero_records = larsoft2supera::convert_generator({zero_direction});
+  require(std::isnan(zero_records[0].neutrino->theta_rad), "Zero direction is unavailable");
   return 0;
 
 } catch (const std::exception &error) {

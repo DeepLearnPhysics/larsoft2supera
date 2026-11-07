@@ -60,6 +60,10 @@ legacy writer does not represent. A compatibility test cannot approve an omissio
 The generator checkpoint was authorized for commit and publication on 2026-11-07;
 see the [MCTruth audit and contract](mctruth-port.md).
 
+The next stage begins with the [fixed-grid and space-point audit](spacepoint-port.md).
+Its first implementation slice is the fixed grid, before point/hit extraction
+and collision selection. The audit accompanies the validity checkpoint.
+
 ## Review packet for every behavior
 
 - **Legacy evidence:** pinned source, effective configuration, and a small trace.
@@ -102,3 +106,8 @@ that the old labels are physically correct.
 
 The other adapters will be reviewed after this boundary is demonstrated, using
 the same contracts and failure cases rather than requiring identical internal code.
+
+The existing input converters now follow [the shared validity standard](validity.md).
+The native reference has 24 explicitly enumerated CRT uncertainty fixes; all other
+serialized fields remain exact. Review this normalization checkpoint before the
+next product port. The adapter pins the coordinated Atomic validity checkpoint.

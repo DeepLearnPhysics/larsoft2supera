@@ -50,8 +50,7 @@ int main() try {
   require(point.signal && point.signal->value == 42.5 &&
               point.signal->unit == SignalUnit::Photoelectron,
           "Signal");
-  require(point.plane == -1 && point.region == "test panel" && !point.complete,
-          "Source annotations");
+  require(!point.plane && point.region == "test panel" && !point.complete, "Source annotations");
 
   // Check hardware ordering, empty groups, and channel contributions.
   require(point.readout_ids == std::vector<std::uint64_t>{255, 0, 255},
@@ -85,18 +84,26 @@ int main() try {
               "Time field");
   }
 
-  // Preserve sentinels and special values instead of introducing validity cuts.
+  // Normalize native absence and nonfinite measurements without physics cuts.
   sbn::crt::CRTHit defaults;
-  auto missing = larsoft2supera::convert_crt_hits({defaults}).front();
-  require(missing.id == 0 && missing.signal->value == sbn::crt::CRTHit::kInvalidF &&
-              std::get<std::uint64_t>(missing.times[0].value) ==
-                  std::numeric_limits<std::uint64_t>::max(),
+  larsoft2supera::NormalizationReport report;
+  auto missing = larsoft2supera::convert_crt_hits({defaults}, &report).front();
+  require(report.counts[0] == 13 && report.examples.size() == 13,
+          "Native sentinels have bounded source diagnostics");
+  require(std::isnan(missing.position->cm[0]) && !missing.plane,
+          "Missing position and plane normalized");
+  require(missing.id == 0 && std::isnan(missing.signal->value) &&
+              std::holds_alternative<std::monostate>(missing.times[0].value),
           "Raw sentinels and ID reset");
 
   defaults.x_pos = std::numeric_limits<float>::infinity();
   defaults.peshit = std::numeric_limits<float>::quiet_NaN();
-  auto special = larsoft2supera::convert_crt_hits({defaults}).front();
-  require(std::isinf(special.position->cm[0]) && std::isnan(special.signal->value),
+  defaults.y_pos = 12.F;
+  auto special = larsoft2supera::convert_crt_hits({defaults}, &report).front();
+  require(special.position->cm[1] == 12. && report.counts[1] == 1 && report.counts[2] == 1 &&
+              report.examples.size() == 16,
+          "Partial coordinates and bounded nonfinite reports");
+  require(std::isnan(special.position->cm[0]) && std::isnan(special.signal->value),
           "No physical filtering");
 
   return 0;
