@@ -1,0 +1,18 @@
+{
+  "name": "larsoft2supera-docs",
+  "private": true,
+  "description": "Documentation checks for larsoft2supera; not runtime dependencies.",
+  "scripts": {
+    "lint": "markdownlint-cli2"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "0.24.0"
+  },
+  "overrides": {
+    "re2js": "2.8.7",
+    "katex": "0.18.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

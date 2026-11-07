@@ -1,0 +1,69 @@
+{
+  "scope": "Frozen legacy ICARUS overlay baseline; not a larsoft2supera or Atomic validation.",
+  "icaruscode": {
+    "version": "v10_27_00",
+    "commit": "ee06f3022034c77fd1e9389e09277ea4709524e2",
+    "qualifiers": "e26:prof"
+  },
+  "sbncode": {
+    "version": "v10_27_00",
+    "commit": "9ad34f677588e7623c3159b23d639db585258549"
+  },
+  "supera_commit": "9e7b533d44236c64ddc17748e92dbd9d2fbe0fae",
+  "larcv2_version": "v2_2_6",
+  "atomic_revision_reviewed": "a2953b373abd4ad8cb3bf57c027d6910acdca72f",
+  "container_image": "fermilab/fnal-dev-sl7@sha256:2191aae074d1adc992910afef657430b3c3e1cb155a58460b13023ea93393e5f",
+  "art_entry_point": "stage1_run2_larcv_icarus_overlay.fcl",
+  "larcv_configuration": {
+    "name": "supera_icarus_MC_all_cryo_PMT_CRT_overlay.fcl",
+    "sha256": "8a0a48d40ab87afc87f6e9a83ae3fcd4a3da0bf0fc1453dd0662137b0de0710f"
+  },
+  "event_ids": [
+    "13171:1:373",
+    "13171:1:385",
+    "13171:1:409",
+    "13171:1:433",
+    "13171:1:445",
+    "13171:1:457",
+    "13171:1:493",
+    "13171:1:529",
+    "13171:1:541",
+    "13171:1:565"
+  ],
+  "artifacts": [
+    {
+      "role": "stage0_input",
+      "lab_relative_path": "stage0-overlay_wfm-decode-detsim-g4-overlay-010-data_run13171_EventBuilder6_art1_1_fstrmOffBeamBNBMINBIAS_20250514T181943.root",
+      "bytes": 297425410,
+      "sha256": "7399d8ff732e45d4689f183ff416e56dda94aba44a65a5ef320dacc9cb2b99e1"
+    },
+    {
+      "role": "augmented_cluster3d_cache",
+      "lab_relative_path": "data/icarus-overlay-cluster3d-v10_27_00/overlay_cluster3d_cache.root",
+      "bytes": 614594346,
+      "sha256": "604b888f408a0c561a9d2df3b673bbc781989f23bc5b6a26d4a1c7f5e6da71f4"
+    },
+    {
+      "role": "canonical_larcv_reference",
+      "lab_relative_path": "results/standard-full-01/larcv_mc_20261107_001608_861108.root",
+      "bytes": 299662711,
+      "sha256": "267fa946b6e93c9fe9fd37a5ee67619dbb7e806ce5def7860934f3588221b7f1"
+    },
+    {
+      "role": "staged_larcv_reference",
+      "lab_relative_path": "results/staged-full-01/supera_reference.root",
+      "bytes": 299662625,
+      "sha256": "54d8c2bf2a294dcf656eaca6ffc099502285fb901515beb3a8b9485c378ff994"
+    }
+  ],
+  "comparison": {
+    "passed": true,
+    "events": 10,
+    "trees": 43,
+    "product_events": 430,
+    "bytes_compared": 819636794
+  },
+  "comparison_method": "Exact freshly serialized persisted product bytes; ROOT file container metadata excluded.",
+  "comparison_report_sha256": "09c8e3137fe771e2c223763d83e02ee0b3365b5b00ea23679f8a6a074a19d954",
+  "availability": "Artifacts live in the local supera-lab workspace outside this repository; no public download is configured."
+}
