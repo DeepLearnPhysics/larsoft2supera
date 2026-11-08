@@ -23,7 +23,7 @@ if(LARSOFT2SUPERA_BUILD_ART)
   find_package(lardataobj REQUIRED)
   find_package(sbnobj REQUIRED)
   if(LARSOFT2SUPERA_BUILD_WRITER_MODULE)
-    find_package(Supera 2 CONFIG REQUIRED COMPONENTS larcv2)
+    find_package(Supera 2 CONFIG REQUIRED COMPONENTS larcv2 processing)
   endif()
 else()
   # Fast tests compile the genuine pinned value types, not replacements or mocks.
@@ -62,6 +62,25 @@ target_include_directories(auxiliary PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(auxiliary PUBLIC sbnobj::Common_CRT supera::data)
+
+if(LARSOFT2SUPERA_BUILD_ART)
+  add_library(spacepoint STATIC src/SpacePoint.cxx)
+  add_library(larsoft2supera::spacepoint ALIAS spacepoint)
+  set_target_properties(spacepoint PROPERTIES POSITION_INDEPENDENT_CODE ON)
+  target_compile_features(spacepoint PUBLIC cxx_std_17)
+  target_compile_options(spacepoint PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  target_include_directories(spacepoint PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+  target_link_libraries(spacepoint PUBLIC lardataobj::RecoBase canvas::canvas supera::data)
+  install(TARGETS spacepoint EXPORT opticalTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  if(BUILD_TESTING)
+    add_executable(spacepoint_test tests/SpacePoint_test.cxx)
+    target_link_libraries(spacepoint_test PRIVATE spacepoint)
+    target_compile_options(spacepoint_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_test(NAME spacepoint_fields COMMAND spacepoint_test)
+  endif()
+endif()
 
 if(LARSOFT2SUPERA_BUILD_GENERATOR)
   find_package(nusimdata REQUIRED)

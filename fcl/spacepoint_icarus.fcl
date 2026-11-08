@@ -1,0 +1,35 @@
+process_name: SpacePointPort
+source: { module_type: RootInput }
+services: {
+ scheduler: { num_threads: 1 num_schedules: 1 }
+ TimeTracker: { printSummary: true dbOutput: { filename: "TimingReport.db" } }
+ MemoryTracker: { dbOutput: { filename: "MemoryReport.db" } }
+}
+physics: {
+ analyzers: { supera: {
+  module_type: SuperaWriter OutputFile: "spacepoints.root" TimingFile: "timings.csv"
+  SpacePointCollections: [
+   {
+    OutputLabel: "reco_cryoE"
+    Sources: [{ InputTag: "cluster3DCryoE" Profile: "IcarusCluster3D"
+                WithHits: true AssociationTag: "cluster3DCryoE" HitTags: ["cluster3DCryoE"] }]
+    MinimumCM: [-412.89, -181.86, -894.951]
+    LengthCM: [1843.2, 1843.2, 1843.2] VoxelSizeCM: [0.3, 0.3, 0.3]
+    ShiftCM: [0, 0, 0] ChargeRange: [-1000, 50000]
+    FloatCharge: true PreferMoreHits: true Planes: 3
+    Fields: ["", "chi2", "cryo", "tpc", "hit_charge", "hit_key"]
+   },
+   {
+    OutputLabel: "reco_cryoW"
+    Sources: [{ InputTag: "cluster3DCryoW" Profile: "IcarusCluster3D"
+                WithHits: true AssociationTag: "cluster3DCryoW" HitTags: ["cluster3DCryoW"] }]
+    MinimumCM: [-412.89, -181.86, -894.951]
+    LengthCM: [1843.2, 1843.2, 1843.2] VoxelSizeCM: [0.3, 0.3, 0.3]
+    ShiftCM: [0, 0, 0] ChargeRange: [-1000, 50000]
+    FloatCharge: true PreferMoreHits: true Planes: 3
+    Fields: ["", "chi2", "cryo", "tpc", "hit_charge", "hit_key"]
+   }
+  ]
+ } }
+ output: [supera] end_paths: [output]
+}

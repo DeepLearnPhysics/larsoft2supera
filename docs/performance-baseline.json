@@ -1,0 +1,146 @@
+{
+  "scope": "Historical legacy measurements, not isolated parser benchmarks or production throughput.",
+  "environment": {
+    "architecture": "linux/amd64 emulated on ARM Mac",
+    "container_image": "fermilab/fnal-dev-sl7@sha256:2191aae074d1adc992910afef657430b3c3e1cb155a58460b13023ea93393e5f",
+    "icaruscode": {
+      "version": "v10_27_00",
+      "commit": "ee06f3022034c77fd1e9389e09277ea4709524e2",
+      "qualifiers": "e26:prof"
+    },
+    "supera_commit": "9e7b533d44236c64ddc17748e92dbd9d2fbe0fae"
+  },
+  "timing_semantics": "TimeReport CPU/Real retained as labeled. TimeTracker module measurements retained separately; do not equate their sum with total job Real time.",
+  "runs": [
+    {
+      "name": "standard-full-01",
+      "job_cpu_seconds": 5485.799448,
+      "job_real_seconds": 7254.085031,
+      "peak_rss_decimal_mb": 4607.59,
+      "driver_seconds": {
+        "mean": 513.2088578883,
+        "median": 289.0684938395,
+        "minimum": 103.606776422,
+        "maximum": 2257.969272115,
+        "sum": 5132.088578883
+      },
+      "driver_events": [
+        {
+          "event": "13171:1:373",
+          "seconds": 295.634296341
+        },
+        {
+          "event": "13171:1:385",
+          "seconds": 282.502691338
+        },
+        {
+          "event": "13171:1:409",
+          "seconds": 258.239289785
+        },
+        {
+          "event": "13171:1:433",
+          "seconds": 722.011751706
+        },
+        {
+          "event": "13171:1:445",
+          "seconds": 119.187949553
+        },
+        {
+          "event": "13171:1:457",
+          "seconds": 635.438957373
+        },
+        {
+          "event": "13171:1:493",
+          "seconds": 103.606776422
+        },
+        {
+          "event": "13171:1:529",
+          "seconds": 121.335879555
+        },
+        {
+          "event": "13171:1:541",
+          "seconds": 2257.969272115
+        },
+        {
+          "event": "13171:1:565",
+          "seconds": 336.161714695
+        }
+      ],
+      "evidence": [
+        {
+          "path": "results/standard-full-01/job.log",
+          "sha256": "c9c341ab5dffc907ef3943385ef414b1b9340c962763ed48b877fb53bd870eab"
+        },
+        {
+          "path": "results/standard-full-01/TimingReport.db",
+          "sha256": "d560291c667e15ea1ed29170f8688755d559c00d78c639c6ec7124f268d16340"
+        }
+      ]
+    },
+    {
+      "name": "staged-full-01",
+      "job_cpu_seconds": 5163.167532,
+      "job_real_seconds": 6984.158413,
+      "peak_rss_decimal_mb": 3393.11,
+      "driver_seconds": {
+        "mean": 521.4078242421,
+        "median": 290.9395311115,
+        "minimum": 106.573778589,
+        "maximum": 2312.996070013,
+        "sum": 5214.078242421
+      },
+      "driver_events": [
+        {
+          "event": "13171:1:373",
+          "seconds": 296.697084592
+        },
+        {
+          "event": "13171:1:385",
+          "seconds": 285.181977631
+        },
+        {
+          "event": "13171:1:409",
+          "seconds": 258.699821035
+        },
+        {
+          "event": "13171:1:433",
+          "seconds": 726.978499542
+        },
+        {
+          "event": "13171:1:445",
+          "seconds": 121.295806931
+        },
+        {
+          "event": "13171:1:457",
+          "seconds": 639.418792165
+        },
+        {
+          "event": "13171:1:493",
+          "seconds": 106.573778589
+        },
+        {
+          "event": "13171:1:529",
+          "seconds": 123.644670724
+        },
+        {
+          "event": "13171:1:541",
+          "seconds": 2312.996070013
+        },
+        {
+          "event": "13171:1:565",
+          "seconds": 342.591741199
+        }
+      ],
+      "evidence": [
+        {
+          "path": "results/staged-full-01/job.log",
+          "sha256": "b0a026cdfd2288950b90b146d60c639956fa0c6a8a43d426e8272b8ed28f309c"
+        },
+        {
+          "path": "results/staged-full-01/TimingReport.db",
+          "sha256": "8bd71d8cd9df05038167b1cf3eb04341f70ec54cfd8e6224634a5ee1217ffb7e"
+        }
+      ]
+    }
+  ]
+}

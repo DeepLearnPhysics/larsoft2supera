@@ -111,3 +111,19 @@ The existing input converters now follow [the shared validity standard](validity
 The native reference has 24 explicitly enumerated CRT uncertainty fixes; all other
 serialized fields remain exact. Review this normalization checkpoint before the
 next product port. The adapter pins the coordinated Atomic validity checkpoint.
+
+Performance is now an explicit per-port acceptance criterion. The
+[performance contract](performance.md) preserves the legacy event/module timing
+baseline and defines separate input-access, conversion, association, labeling and
+output measurements. Per-product parser timings remain to be measured before
+accepting the next reader; total partial-adapter runtime is not a legacy speedup.
+
+### Space-point extraction review
+
+Native point and optional hit parsing now uses Atomic-owned records with no LArCV
+dependency. [The parser contract](spacepoint-parser.md) describes input profiles,
+association ownership, validation, and remaining scope. [Measured timings](performance.md)
+separate loading from conversion. The [completed fixed-grid slice](spacepoint-output.md)
+now reproduces all twenty space-point output trees exactly against both references.
+The space-point checkpoint was authorized for commit and publication on 2026-11-08.
+The fast and native C++ workflows pin the coordinated Atomic space-point commit.

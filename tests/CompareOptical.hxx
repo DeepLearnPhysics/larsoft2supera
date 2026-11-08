@@ -9,6 +9,7 @@
 #include "larcv/core/DataFormat/EventFlash.h"
 #include "larcv/core/DataFormat/EventNeutrino.h"
 #include "larcv/core/DataFormat/EventParticle.h"
+#include "larcv/core/DataFormat/EventVoxel3D.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -63,8 +64,8 @@ std::map<std::string, std::string> branches(TTree &t) {
 }
 
 std::vector<Row> compare(const char *left, const char *right, Long64_t expected_entries,
-                         bool auxiliary = false, bool generator = false,
-                         bool normalize_crt = false) {
+                         bool auxiliary = false, bool generator = false, bool normalize_crt = false,
+                         bool spacepoints = false) {
   std::unique_ptr<TFile> a(TFile::Open(left)), b(TFile::Open(right));
   if (!a || !b || a->IsZombie() || b->IsZombie())
     throw std::runtime_error("Cannot open input files");
@@ -75,6 +76,13 @@ std::vector<Row> compare(const char *left, const char *right, Long64_t expected_
   if (generator) {
     keys.emplace("particle_mpv_tree", "TTree");
     keys.emplace("neutrino_mpv_tree", "TTree");
+  }
+  if (spacepoints) {
+    keys.clear();
+    for (const auto &side : {std::string("E"), std::string("W")})
+      for (const auto &suffix : {"", "_chi2", "_cryo", "_tpc", "_hit_charge0", "_hit_charge1",
+                                 "_hit_charge2", "_hit_key0", "_hit_key1", "_hit_key2"})
+        keys.emplace("sparse3d_reco_cryo" + side + suffix + "_tree", "TTree");
   }
   const auto reference_keys = tree_keys(*a);
   for (const auto &key : keys)

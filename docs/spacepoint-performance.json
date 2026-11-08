@@ -1,0 +1,160 @@
+{
+  "environment": "ICARUS v10_27_00 e26:prof; gcc12.1 -O3 -DNDEBUG; linux/amd64 emulation on ARM Mac",
+  "input_sha256": "604b888f408a0c561a9d2df3b673bbc781989f23bc5b6a26d4a1c7f5e6da71f4",
+  "validation": {
+    "passed": true,
+    "verified_inventory": {
+      "points": 8839871,
+      "links": 20490298,
+      "unique_hits": 383132
+    },
+    "expected_failures": 8,
+    "performance_repetitions": 3,
+    "note": "Verification is outside timed regions; no LArCV output or voxel selection."
+  },
+  "runs": {
+    "points-only": {
+      "event_measurements": 30,
+      "seconds_per_event_both_cryostats": {
+        "point_access_s": {
+          "mean": 0.16473964333333332,
+          "median": 0.15182495000000001,
+          "max": 0.284375
+        },
+        "point_convert_s": {
+          "mean": 0.012632263,
+          "median": 0.012196855,
+          "max": 0.02221352
+        },
+        "hit_access_s": {
+          "mean": 0.0,
+          "median": 0.0,
+          "max": 0.0
+        },
+        "association_access_s": {
+          "mean": 0.0,
+          "median": 0.0,
+          "max": 0.0
+        },
+        "hit_convert_links_s": {
+          "mean": 0.0,
+          "median": 0.0,
+          "max": 0.0
+        },
+        "conversion_total_s": {
+          "mean": 0.012632263,
+          "median": 0.012196855,
+          "max": 0.02221352
+        },
+        "read_total_s": {
+          "mean": 0.17737190633333333,
+          "median": 0.16358812,
+          "max": 0.30650097
+        }
+      },
+      "peak_rss_MB": [
+        952.918,
+        954.257,
+        954.11
+      ]
+    },
+    "associated": {
+      "event_measurements": 30,
+      "seconds_per_event_both_cryostats": {
+        "point_access_s": {
+          "mean": 0.16427935666666665,
+          "median": 0.1489483,
+          "max": 0.285567
+        },
+        "point_convert_s": {
+          "mean": 0.011629842,
+          "median": 0.011003315,
+          "max": 0.0215389
+        },
+        "hit_access_s": {
+          "mean": 0.022788684666666666,
+          "median": 0.020668215,
+          "max": 0.0340695
+        },
+        "association_access_s": {
+          "mean": 1.1524946,
+          "median": 1.052443,
+          "max": 2.019795
+        },
+        "hit_convert_links_s": {
+          "mean": 0.023615006666666667,
+          "median": 0.02278501,
+          "max": 0.04203562
+        },
+        "conversion_total_s": {
+          "mean": 0.03524484866666667,
+          "median": 0.03388057,
+          "max": 0.06250910000000001
+        },
+        "read_total_s": {
+          "mean": 1.37480749,
+          "median": 1.26359199,
+          "max": 2.3976555999999998
+        }
+      },
+      "peak_rss_MB": [
+        1883.62,
+        1883.68,
+        1882.39
+      ]
+    }
+  },
+  "evidence_sha256": {
+    "results/spacepoint-parser-03/points-only-0/timings.csv": "0ff6be56b095a2418f97faa8339040c8140c8b534b6da7a24f1ca2ae07060e2a",
+    "results/spacepoint-parser-03/points-only-0/run.log": "b72838ccf3a494147ab80b10c45eaebb49ce4615ecc0235ad4619834bfccbb8f",
+    "results/spacepoint-parser-03/points-only-1/timings.csv": "864a8121077e32c41b5f7c6251d8c2e07b138279ed0c8fc48caefaef9d96e0fc",
+    "results/spacepoint-parser-03/points-only-1/run.log": "c90f82efed09332292d44a8be99e0d7d0c90ed527a7cd76f76149e4ddb1add18",
+    "results/spacepoint-parser-03/points-only-2/timings.csv": "847f58dc536bc2c3a376eb28f6392a58c0fc9c410e30ab91a673e33c0dc577fe",
+    "results/spacepoint-parser-03/points-only-2/run.log": "2a0e3d6645215283d96f1f9e879298e95b7dc9bbc3334e66e0cbc28d9714cadb",
+    "results/spacepoint-parser-03/associated-0/timings.csv": "bf9ddf21f091640c1753c7de2b07f9ef2c12e97c2e523a9f5f028bfed9f7dfe9",
+    "results/spacepoint-parser-03/associated-0/products.csv": "fa92f69adc5794c7d0c9d4acfaf767bb02fb4bc7216b6510bc85e5f950ee228f",
+    "results/spacepoint-parser-03/associated-0/run.log": "c9d35df3c999cb52184781c0c41f1d15a4c750616b3573a2c6f97d99979007a1",
+    "results/spacepoint-parser-03/associated-1/timings.csv": "4dd3ac9211336e7625a2279b68fe76cc06d152b920fb8447912671e8f1e663c8",
+    "results/spacepoint-parser-03/associated-1/products.csv": "8ff8e17ae58b25fbdbd808a58592e129570025d1cb5875a5f6b29beab0e005db",
+    "results/spacepoint-parser-03/associated-1/run.log": "b2f1677eaefc372726a3604230df0bf90c1fd3535756c88541506c0815d9f135",
+    "results/spacepoint-parser-03/associated-2/timings.csv": "17c33ed5afcc57a3f04d16c1b8582d9c8f69d9b658bc2825e6f217f196ca842c",
+    "results/spacepoint-parser-03/associated-2/products.csv": "0d93cdfd103bb522869a2d532ac76ddbbb7478973c25dc41694f801b19b7ca1b",
+    "results/spacepoint-parser-03/associated-2/run.log": "66d06cef66a2b6b31304fc344f2250856fe256ae4077153cf1371e26571c8a80"
+  },
+  "other_products_steady_conversion_seconds": {
+    "opflashCryoE::MCstage0": {
+      "median": 7.875e-06,
+      "max": 1.1583e-05
+    },
+    "opflashCryoW::MCstage0": {
+      "median": 9.5e-06,
+      "max": 1.675e-05
+    },
+    "overlayCRTHit::Overlay": {
+      "median": 0.000145875,
+      "max": 0.00016625
+    },
+    "generator::WireModMuon": {
+      "median": 2.833e-06,
+      "max": 4.458e-06
+    }
+  },
+  "source_state": {
+    "larsoft2supera": {
+      "base_commit": "b876f9c5d8b05a86bd6a9ed5601e9cd7148db559",
+      "uncommitted_work": true,
+      "file_sha256": {
+        "include/larsoft2supera/ReadSpacePoint.h": "90cf1621b713e7bd403ade78ff87c76f9daf5aaf4742f38f8e7e339b84e97740",
+        "include/larsoft2supera/SpacePoint.h": "88aebcdc549e5e6df4ec83e9225429c5ceb4c8b1162ade4f66194a865e585602",
+        "src/SpacePoint.cxx": "93a676eba01b056139c5fc37f8896719d0f78d66c266e00815dd5780eb867b97"
+      }
+    },
+    "SuperaAtomic": {
+      "base_commit": "f80ee2c124cda0f70c07038e273440b6450cd9bf",
+      "uncommitted_work": true,
+      "file_sha256": {
+        "src/supera/data/SpacePoint.h": "992c4da2bf1b57ca0e9f76bc561d86161df48032e27780e7e409ff3a7666ed56"
+      }
+    }
+  }
+}

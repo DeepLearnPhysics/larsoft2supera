@@ -3,7 +3,9 @@
 LArSoft input adapter for [SuperaAtomic][atomic], enabling shared LArTPC
 voxelization and truth labeling across experiments.
 
-**Status: optical, ICARUS auxiliary-detector, and generator checkpoints validated.** The shared data
+**Status: optical, ICARUS auxiliary-detector, and generator checkpoints validated.**
+The fixed-grid space-point slice now matches all twenty LArCV2 tensors against
+both references; see [its review and validation](docs/spacepoint-output.md). The shared data
 model and LArCV2 writer are coordinated changes in SuperaAtomic.
 The first target is ICARUS overlay data. Support for other experiments will be
 added through explicit input contracts and integration tests.

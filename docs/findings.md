@@ -268,3 +268,67 @@ Do not open upstream issues or mark fixes approved automatically.
   only the enumerated reference transformations. Controls detect unrelated changes.
 - **Scope:** this establishes unusable uncertainty values, not their producer-side
   root cause. No reconstruction or uncertainty-estimation algorithm is changed.
+
+## F-019: legacy voxel indexing assumes valid floating inputs and count products
+
+- **Evidence:** `ImageMeta3D::id` performs floating-to-unsigned conversion after
+  ordinary bounds comparisons. NaN passes those comparisons. `update` multiplies
+  axis counts without overflow checks and does not validate finite effective widths.
+- **Resolution in the new path:** `FixedGrid` validates metadata before configuring
+  the legacy indexer and rejects nonfinite positions before any coordinate cast.
+  It checks canonical/native index capacity and translates the legacy sentinel at
+  the boundary. Finite out-of-volume points remain normal geometric rejections.
+- **Validation:** boundary and overflow fixtures under address, undefined-behavior
+  and float-cast-overflow sanitizers; exact reference metadata and sampled coordinate
+  agreement for both immutable files.
+- **Scope:** direct legacy API callers are not migrated by this change. No claim
+  is made that the old API is safe for malformed inputs or that a sample exhibited
+  NaN positions. The previous runtime point audit observed no nonfinite positions.
+
+## F020: SpacePoint has two native missing-ID conventions
+
+The pinned lardataobj v10_05_03 default constructor initializes `fID` to `-1`,
+whereas `recob::SpacePoint::InvalidID` is `util::kBogusI`. The input boundary
+recognizes both as absent; other signed IDs are preserved. Neither convention
+is propagated into the shared optional identity. Native converter tests cover
+both defaults and a valid negative ID. This does not reserve finite coordinates
+or covariance entries as missing.
+
+## F021: FindManyP association order is not serialized order
+
+The pinned canvas v3_16_04 `detail/IPRHelper.h` constructs an
+`std::unordered_multimap` and iterates equal ranges to populate `FindManyP`.
+The cached sample demonstrates different ordering from the underlying `Assns`.
+Consequently, using its iteration order for a last-wins choice can couple results
+to an implementation detail. No physics error is claimed from this sample alone.
+
+The new reader preserves serialized order within each point, including repeated
+links, while accepting interleaved table rows. An explicit native fixture checks
+that ordering. Cached-sample verification compares exact product/key multisets
+against `FindManyP`, so no relationship or multiplicity may disappear. Before
+porting per-plane last-wins behavior, the selection stage must establish an
+explicit policy and characterize any reference differences. Direct table reading
+also avoids a vector allocation per point and the hash-based lookup cache.
+
+## F022: Legacy collision replacement can mix different points' attributes
+
+The baseline `SuperaSpacePoint::process` writes charge, chi-square, asymmetry, and
+hit count before checking whether hit count exceeds the plane count. Its later
+`continue` does not undo that replacement. Other fields may therefore come from
+an older point or be absent. Repeated planes and mixed cryostat/TPC links similarly
+lack an unambiguous physical interpretation, compounded by F021's iteration order.
+
+The shared selector validates these cases and fails the event before publishing
+a result. Every voxel references one complete representative. Zero-hit points
+explicitly project missing detector and plane values, avoiding stale attributes.
+Synthetic tests cover the safeguards. None of these malformed cases occurred in
+the cached sample; all twenty tensors match both references exactly.
+
+## F023: Integer hit identities can silently round in float sparse tensors
+
+Legacy space-point output stores hit keys as float values. Beyond the exact float
+integer range, distinct keys can collapse to the same value. Shared records retain
+integer keys and product identity. The compatibility writer checks exact float
+representability and rejects lossy identities; measurement overflow also fails.
+The test key 16,777,217 is rejected. Native sample keys are exactly representable,
+so this safeguard does not require a reference-difference allowance.

@@ -1,7 +1,11 @@
 #include "larsoft2supera/AuxDet.h"
 #include "larsoft2supera/Generator.h"
 #include "larsoft2supera/Optical.h"
+#include "larsoft2supera/ReadSpacePoint.h"
 #include "supera/process/SelectGenerator.h"
+#include "supera/process/SelectSpacePoints.h"
+#include <chrono>
+#include <fstream>
 
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
@@ -67,6 +71,22 @@ private:
 
   std::vector<GeneratorCollection> generator_collections_;
   std::vector<std::string> generator_outputs_;
+
+  struct PointInput {
+    art::InputTag tag;
+    SpacePointProfile profile;
+    std::optional<SpacePointHitInput> hits;
+  };
+
+  struct PointCollection {
+    std::vector<PointInput> inputs;
+    supera::FixedGrid grid;
+    supera::SpacePointSelection selection;
+  };
+
+  std::vector<PointCollection> point_collections_;
+  std::vector<supera::io::larcv2::SpacePointOutput> point_outputs_;
+  std::ofstream timings_;
   std::unique_ptr<supera::EventWriter> writer_;
 };
 
@@ -75,8 +95,10 @@ SuperaWriter::SuperaWriter(const fhicl::ParameterSet &config) : art::EDAnalyzer(
   const auto collections = config.get<std::vector<fhicl::ParameterSet>>("Collections", {});
   const auto auxiliary = config.get<std::vector<fhicl::ParameterSet>>("AuxiliaryCollections", {});
   const auto generator = config.get<std::vector<fhicl::ParameterSet>>("GeneratorCollections", {});
+  const auto points = config.get<std::vector<fhicl::ParameterSet>>("SpacePointCollections", {});
   const auto output_file = config.get<std::string>("OutputFile");
-  if ((collections.empty() && auxiliary.empty() && generator.empty()) || output_file.empty()) {
+  if ((collections.empty() && auxiliary.empty() && generator.empty() && points.empty()) ||
+      output_file.empty()) {
     throw std::invalid_argument("Collections and OutputFile must not be empty");
   }
 
@@ -154,12 +176,65 @@ SuperaWriter::SuperaWriter(const fhicl::ParameterSet &config) : art::EDAnalyzer(
     generator_outputs_.push_back(output);
   }
 
+  // Configure shared grid/selection separately from native product access.
+  for (const auto &collection : points) {
+    const auto triple = [&](const std::string &key) {
+      const auto values = collection.get<std::vector<double>>(key);
+      if (values.size() != 3)
+        throw std::invalid_argument(key + " requires three values");
+      return std::array<double, 3>{values[0], values[1], values[2]};
+    };
+    auto grid = supera::FixedGrid::from_lengths(triple("MinimumCM"), triple("LengthCM"),
+                                                triple("VoxelSizeCM"));
+    supera::SpacePointSelection selection;
+    const auto range = collection.get<std::vector<double>>("ChargeRange");
+    if (range.size() != 2)
+      throw std::invalid_argument("ChargeRange requires two values");
+    selection.minimum_charge = range[0];
+    selection.maximum_charge = range[1];
+    selection.shift_cm = triple("ShiftCM");
+    selection.float_charge = collection.get<bool>("FloatCharge", false);
+    selection.prefer_more_hits = collection.get<bool>("PreferMoreHits", true);
+    selection.planes = collection.get<unsigned int>("Planes", 3);
+    PointCollection definition{{}, std::move(grid), selection};
+    for (const auto &source : collection.get<std::vector<fhicl::ParameterSet>>("Sources")) {
+      const art::InputTag tag(source.get<std::string>("InputTag"));
+      const auto profile_name = source.get<std::string>("Profile");
+      if (tag.label().empty() || profile_name != "IcarusCluster3D")
+        throw std::invalid_argument("Voxel output requires an explicit supported charge profile");
+      PointInput input{tag, SpacePointProfile::IcarusCluster3D, {}};
+      consumes<std::vector<recob::SpacePoint>>(tag);
+      if (source.get<bool>("WithHits", true)) {
+        input.hits =
+            SpacePointHitInput{art::InputTag(source.get<std::string>("AssociationTag")), {}};
+        consumes<art::Assns<recob::SpacePoint, recob::Hit>>(input.hits->associations);
+        for (const auto &hit : source.get<std::vector<std::string>>("HitTags")) {
+          input.hits->products.emplace_back(hit);
+          consumes<std::vector<recob::Hit>>(input.hits->products.back());
+        }
+      }
+      definition.inputs.push_back(std::move(input));
+    }
+    if (definition.inputs.empty())
+      throw std::invalid_argument("Space-point Sources must not be empty");
+    point_collections_.push_back(std::move(definition));
+    point_outputs_.push_back({collection.get<std::string>("OutputLabel"), selection.planes,
+                              collection.get<std::vector<std::string>>("Fields")});
+  }
+  const auto timing_file = config.get<std::string>("TimingFile", "");
+  if (!timing_file.empty()) {
+    timings_.open(timing_file);
+    if (!timings_)
+      throw std::runtime_error("Cannot open timing report");
+    timings_ << "event,collection,read_s,select_s,write_s,voxels,nonfinite,charge_cut,outside,"
+                "collisions,replacements\n";
+  }
   output_file_ = output_file;
 }
 
 void SuperaWriter::beginJob() {
   writer_ = std::make_unique<supera::io::larcv2::Writer>(output_file_, outputs_, auxiliary_outputs_,
-                                                         generator_outputs_);
+                                                         generator_outputs_, point_outputs_);
 }
 
 void SuperaWriter::analyze(const art::Event &event) {
@@ -210,7 +285,39 @@ void SuperaWriter::analyze(const art::Event &event) {
     record.generator.push_back(supera::select_generator(std::move(collection), definition.origin));
   }
 
+  // Native extraction preserves all points; shared processing owns rasterization.
+  using Clock = std::chrono::steady_clock;
+  const auto now = [&] { return timings_.is_open() ? Clock::now() : Clock::time_point{}; };
+  for (std::size_t index = 0; index < point_collections_.size(); ++index) {
+    const auto &definition = point_collections_[index];
+    std::vector<supera::SpacePointCollection> sources;
+    const auto start = now();
+    for (const auto &input : definition.inputs) {
+      NormalizationReport report;
+      sources.push_back(read_spacepoints(event, input.tag, input.profile, input.hits, &report));
+      report_normalization(report, event, input.tag.encode());
+    }
+    const auto loaded = now();
+    record.spacepoints.push_back(supera::select_spacepoints(
+        point_outputs_[index].name, std::move(sources), definition.grid, definition.selection));
+    const auto selected = now();
+    if (timings_.is_open()) {
+      const auto &output = record.spacepoints.back();
+      timings_ << event.event() << ',' << output.name << ','
+               << std::chrono::duration<double>(loaded - start).count() << ','
+               << std::chrono::duration<double>(selected - loaded).count() << ",0,"
+               << output.voxels.size() << ',' << output.report.nonfinite << ','
+               << output.report.charge_cut << ',' << output.report.outside_grid << ','
+               << output.report.collisions << ',' << output.report.replacements << '\n';
+    }
+  }
+  const auto start = now();
   writer_->write(record);
+  if (timings_.is_open()) {
+    timings_ << event.event() << ",writer,0,0,"
+             << std::chrono::duration<double>(now() - start).count() << ",0,0,0,0,0,0\n";
+    timings_.flush();
+  }
 }
 
 void SuperaWriter::endJob() {

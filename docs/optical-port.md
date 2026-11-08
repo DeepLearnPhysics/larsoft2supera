@@ -44,7 +44,7 @@ The configuration safeguards do not change the frozen sample's output.
 ## Builds
 
 The two repositories are a coordinated checkpoint. This adapter pins Atomic
-`f80ee2c124cda0f70c07038e273440b6450cd9bf` in CI and the fast-check script.
+`bd218e470d5996eb8ae13182627a1b3a4c5887f1` in CI and the fast-check script.
 Install that revision before configuring against the shared v2 data API.
 
 The default build uses installed art/lardataobj and enables the composed LArCV2

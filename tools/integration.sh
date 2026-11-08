@@ -21,12 +21,12 @@ python3 tests/verify_baseline.py "$FIXTURE_ROOT" "$VALIDATION_DIR/event-ids.json
 
 stage="$PWD/build/v2-install"
 cmake -S "$SUPERA_SOURCE" -B build/atomic-icarus -DSUPERA_BUILD_LARCV2=ON \
-  -DSUPERA_BUILD_LABELING=OFF -DCMAKE_INSTALL_PREFIX="$stage"
+  -DSUPERA_BUILD_LABELING=OFF -DSUPERA_BUILD_PROCESSING=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$stage"
 cmake --build build/atomic-icarus -j2
 ctest --test-dir build/atomic-icarus --output-on-failure
 cmake --install build/atomic-icarus
 cmake -S . -B build/adapter-icarus -DSupera_DIR="$stage/lib64/cmake/Supera" \
-  -DCMAKE_PREFIX_PATH="$stage" \
+  -DCMAKE_PREFIX_PATH="$stage" -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX="$stage"
 cmake --build build/adapter-icarus -j2
 ctest --test-dir build/adapter-icarus --output-on-failure
@@ -48,3 +48,15 @@ python3 tests/integration.py \
 
 # Native generator tests require ROOT/nusimdata and cannot run in the lean image.
 bash tools/generator-checks.sh
+
+# Validate extraction independently of the legacy LArCV projection.
+python3 tests/spacepoint_integration.py \
+  --input "$FIXTURE_ROOT/data/icarus-overlay-cluster3d-v10_27_00/overlay_cluster3d_cache.root" \
+  --output "$VALIDATION_DIR/spacepoints" --repeats 0
+bash tools/spacepoint-checks.sh
+
+# Compare all sparse output fields against both immutable baseline files.
+python3 tests/spacepoint_output_integration.py --lab "$FIXTURE_ROOT" \
+  --output "$VALIDATION_DIR/spacepoint-output"
+
+bash tools/spacepoint-output-checks.sh

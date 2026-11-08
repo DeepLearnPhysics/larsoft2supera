@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           repository: DeepLearnPhysics/SuperaAtomic
-          ref: f80ee2c124cda0f70c07038e273440b6450cd9bf
+          ref: bd218e470d5996eb8ae13182627a1b3a4c5887f1
           path: build/deps/SuperaAtomic
           persist-credentials: false
       - name: Build, install, consume, and compare in the pinned release

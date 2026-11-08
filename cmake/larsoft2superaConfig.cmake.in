@@ -1,6 +1,7 @@
 @PACKAGE_INIT@
 include(CMakeFindDependencyMacro)
 find_dependency(lardataobj)
+find_dependency(canvas)
 find_dependency(sbnobj)
 if(@LARSOFT2SUPERA_BUILD_GENERATOR@)
   find_dependency(nusimdata)

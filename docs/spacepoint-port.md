@@ -183,3 +183,26 @@ address and undefined-behavior sanitizers, including the new grid regression and
 the existing labeling smoke test. The source audit and documentation lint pass.
 This is the first bounded grid fix; the space-point production port has not yet
 been implemented or claimed equivalent.
+
+## Checked v2 grid: next review step
+
+Following the published validity checkpoint, Atomic now has a `Grid3D` metadata
+record and a `FixedGrid` interface around its existing indexer. It uses canonical
+signed IDs, distinguishes nonfinite coordinates from finite out-of-volume points,
+and validates count arithmetic before legacy indexing. This preserves the fixed
+box's closed boundaries and requested-width truncation without a LArCV dependency.
+This implementation is included in the reconstructed space-point checkpoint.
+
+The native reference probe checked all twenty product grids for all ten events in
+both files: 400 product-events and 13,181 sampled/boundary coordinate probes, with
+no differences. Sanitizer tests cover malformed metadata, invalid indices and
+large IDs. The next stage now implements native extraction and association validation; see
+[the parser contract](spacepoint-parser.md). Voxel selection and LArCV projection
+remain separate upcoming steps.
+
+## Completed fixed-grid slice
+
+Shared representative selection and LArCV2 projection now implement the configured
+path end to end. All twenty tensors match both references exactly. The sections
+above retain the staged audit history; [the output review](spacepoint-output.md)
+is the current implementation contract and validation status.

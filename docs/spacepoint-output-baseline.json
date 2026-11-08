@@ -1,0 +1,122 @@
+{
+  "description": "One optimized, single-threaded ten-event run; both cryostats; linux/amd64 emulation on ARM Mac. No concurrent build during lar execution.",
+  "environment": "ICARUS v10_27_00 e26:prof; gcc12.1; -O3 -DNDEBUG in adapter and Atomic",
+  "comparison": [
+    {
+      "reference": "staged",
+      "passed": true,
+      "product_events": 200,
+      "bytes_compared": 739663140
+    },
+    {
+      "reference": "standard",
+      "passed": true,
+      "product_events": 200,
+      "bytes_compared": 739663140
+    }
+  ],
+  "selected_voxels": 6163365,
+  "seconds_per_event": {
+    "read_s": {
+      "median": 1.8268010000000001,
+      "mean": 2.0086929000000002,
+      "maximum": 3.46049
+    },
+    "select_s": {
+      "median": 0.25516935,
+      "mean": 0.27541583999999997,
+      "maximum": 0.5338075
+    },
+    "write_s": {
+      "median": 1.880485,
+      "mean": 2.010923,
+      "maximum": 3.7508
+    },
+    "total_s": {
+      "median": 4.17230835,
+      "mean": 4.29503174,
+      "maximum": 7.711833
+    }
+  },
+  "event_measurements": {
+    "373": {
+      "read_s": 1.891286,
+      "select_s": 0.3294717,
+      "write_s": 1.83863,
+      "voxels": 527753,
+      "total_s": 4.0593877
+    },
+    "385": {
+      "read_s": 2.300383,
+      "select_s": 0.2558357,
+      "write_s": 1.92234,
+      "voxels": 601207,
+      "total_s": 4.4785587
+    },
+    "409": {
+      "read_s": 1.014095,
+      "select_s": 0.1204654,
+      "write_s": 1.03617,
+      "voxels": 341139,
+      "total_s": 2.1707304
+    },
+    "433": {
+      "read_s": 3.318194,
+      "select_s": 0.5338075,
+      "write_s": 2.69469,
+      "voxels": 863200,
+      "total_s": 6.5466915
+    },
+    "445": {
+      "read_s": 1.118134,
+      "select_s": 0.12167439999999999,
+      "write_s": 1.14468,
+      "voxels": 350062,
+      "total_s": 2.3844884
+    },
+    "457": {
+      "read_s": 1.762316,
+      "select_s": 0.25450300000000003,
+      "write_s": 2.26841,
+      "voxels": 584410,
+      "total_s": 4.285228999999999
+    },
+    "493": {
+      "read_s": 1.2438660000000001,
+      "select_s": 0.1279619,
+      "write_s": 1.3133,
+      "voxels": 379767,
+      "total_s": 2.6851279000000003
+    },
+    "529": {
+      "read_s": 2.2361240000000002,
+      "select_s": 0.3066,
+      "write_s": 2.54701,
+      "voxels": 800180,
+      "total_s": 5.089734
+    },
+    "541": {
+      "read_s": 3.46049,
+      "select_s": 0.500543,
+      "write_s": 3.7508,
+      "voxels": 1178921,
+      "total_s": 7.711833
+    },
+    "565": {
+      "read_s": 1.742041,
+      "select_s": 0.2032958,
+      "write_s": 1.5932,
+      "voxels": 536726,
+      "total_s": 3.5385368
+    }
+  },
+  "whole_process_peak_rss_decimal_MB": 2553.3,
+  "evidence_sha256": {
+    "results/spacepoint-output-01/timings.csv": "1ffba06cc592ac8151549b085d2add5812049ed859cfbe5fcf92acacd60b100d",
+    "results/spacepoint-output-01/run.log": "8104d2fc91f2a89014d009b6c5fbaffe54c8a4db42dd05b83385693e22d981d5",
+    "results/spacepoint-output-01/summary.json": "778c819cde4b4d90467f203f8967af558e40269bab3f85576aa52e50607f457a",
+    "results/spacepoint-output-01/staged-comparison.json": "c57f340a9e8773d701cbefb284cc9615b45ae411ac0bce739c8468bbb4642e09",
+    "results/spacepoint-output-01/standard-comparison.json": "7814619bf599aed54af2782975bcd02d5c23d62eb8e3328f23c4368321647695",
+    "results/spacepoint-output-01/job.fcl": "1387c6a950161a6137b41f9e7eacb482e3f7905c2cfdc8c225a1f7d5a3e20898"
+  }
+}
