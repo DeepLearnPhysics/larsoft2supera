@@ -148,3 +148,11 @@ now include shared selection and LArCV2 projection/writing. Median combined time
 was 4.17 s/event in one optimized run, with 2553.3 MB peak process RSS. This adds
 work and retains both raw collections while writing; it is not directly comparable
 to the earlier extraction-only memory and throughput figures.
+
+## Deposit and attribution slice
+
+The [deposit review](deposit-port.md#frozen-fixture-result) records per-product
+source/conversion and attribution times for reduced deposits, full steps, and
+channel IDEs. Cross-product evidence and combined archive/output writing are timed
+separately. The ten-event CSVs are in `results/deposit-integration-01` in the lab.
+This is a partial truth pipeline, not a full legacy runtime comparison.

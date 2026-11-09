@@ -60,3 +60,15 @@ python3 tests/spacepoint_output_integration.py --lab "$FIXTURE_ROOT" \
   --output "$VALIDATION_DIR/spacepoint-output"
 
 bash tools/spacepoint-output-checks.sh
+
+# Transport inventory reads persisted truth directly; no MCReco producer is scheduled.
+python3 tests/transport_integration.py \
+  --input "$FIXTURE_ROOT/data/icarus-overlay-cluster3d-v10_27_00/overlay_cluster3d_cache.root" \
+  --reference "$FIXTURE_ROOT/results/staged-full-01/supera_reference.root" \
+  --reference "$FIXTURE_ROOT/results/standard-full-01/larcv_mc_20261107_001608_861108.root" \
+  --output "$VALIDATION_DIR/transport"
+bash tools/transport-checks.sh
+
+# Native contributions stay intact; compare aggregate physical energy before grouping.
+python3 tests/deposit_integration.py --lab "$FIXTURE_ROOT" --output "$VALIDATION_DIR/deposits"
+bash tools/deposit-checks.sh

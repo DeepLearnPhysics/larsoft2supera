@@ -127,3 +127,31 @@ separate loading from conversion. The [completed fixed-grid slice](spacepoint-ou
 now reproduces all twenty space-point output trees exactly against both references.
 The space-point checkpoint was authorized for commit and publication on 2026-11-08.
 The fast and native C++ workflows pin the coordinated Atomic space-point commit.
+
+### Transported-particle truth review
+
+Before implementing the next reader, the [truth audit](truth-particle-audit.md)
+traces original simulation retention, regenerated `mcreco`, and frozen output.
+It separates the available transport inventory from labeling groups, identifies
+recoverable ancestor affiliation and invalid output values, and records the
+limits of this cosmic-muon fixture. The audit preceded the direct transport implementation
+described below.
+
+The [transport inventory implementation](transport-port.md) now provides direct
+MCParticle extraction, shared ancestry resolution, and LArCV2 projection with a
+source-preserving companion archive. It removes MCReco from this input path;
+charge-based labeling and calorimetry remain later stages. The intentional
+inventory/legacy-labeling differences are documented separately
+from final semantic grouping.
+
+### Deposit extraction and attribution
+
+The [deposit contract](deposit-port.md) adds reduced energy points, full simulation
+steps, and readout IDEs without MCReco. Shared attribution uses explicit identity
+and cross-product ancestry evidence; LArCV projection remains in Atomic's writer.
+The profile is suitable for a truth inventory/deposit audit, but does not yet
+provide semantic grouping or true non-ghost labels. Findings F029–F030 record
+upstream ancestry and reduced-position acceptance issues. The transport/deposit checkpoint was
+authorized for publication on 2026-11-09,
+with the adapter pinned to the coordinated Atomic revision. Cluster merging,
+semantic labeling, and reconstructed truth matching remain subsequent stages.

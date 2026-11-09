@@ -3,10 +3,13 @@
 LArSoft input adapter for [SuperaAtomic][atomic], enabling shared LArTPC
 voxelization and truth labeling across experiments.
 
-**Status: optical, ICARUS auxiliary-detector, and generator checkpoints validated.**
+**Status: optical, auxiliary, generator, space-point, transport, and deposit slices validated.**
 The fixed-grid space-point slice now matches all twenty LArCV2 tensors against
 both references; see [its review and validation](docs/spacepoint-output.md). The shared data
 model and LArCV2 writer are coordinated changes in SuperaAtomic.
+The [transport inventory slice](docs/transport-port.md) now reads persisted truth
+directly without MCReco, preserves source fields, and resolves ancestry before
+labeling selection. Its comparison and remaining limitations are documented separately.
 The first target is ICARUS overlay data. Support for other experiments will be
 added through explicit input contracts and integration tests.
 
@@ -76,6 +79,10 @@ record. Broader behavior changes remain separate review decisions.
 
 The [generator checkpoint (`mpv`)](docs/mctruth-port.md) includes
 its field audit and explicit legacy compatibility decisions.
+
+The [deposit port](docs/deposit-port.md) preserves simulation steps and readout
+contributions, resolves available ancestry, and projects deposited-energy voxels.
+Semantic grouping and true non-ghost labels remain subsequent stages.
 
 ## Development
 

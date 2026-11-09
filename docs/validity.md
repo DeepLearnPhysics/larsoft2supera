@@ -95,7 +95,7 @@ entire serialized products. The observed transformation list must match the
 allowlist exactly. Neither input nor reference files are rewritten. Comparator
 controls verify that unrelated field changes still fail.
 
-The adapter pins Atomic `bd218e470d5996eb8ae13182627a1b3a4c5887f1`, including
+The adapter pins Atomic `ef7d3fa85ea44b213e780b22cc4887311fd4f4de`, including
 the shared validity contract and the separately committed large-grid shift fix.
 
 ## Validation of this checkpoint

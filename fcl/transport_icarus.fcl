@@ -1,0 +1,29 @@
+process_name: TransportPort
+source: { module_type: RootInput }
+services: { scheduler: { num_threads: 1 num_schedules: 1 } }
+physics: {
+  analyzers: {
+    transport: {
+      module_type: SuperaWriter
+      OutputFile: "transport.root"
+      TransportTimingFile: "transport-timing.csv"
+      GeneratorCollections: [
+        { OutputLabel: "mpv" Projection: "LegacySuperaMCTruth"
+          Sources: [{ InputTag: "generator::WireModMuon" Required: true }]
+        }
+      ]
+      TransportCollections: [
+        { OutputLabel: "transport"
+          Sources: [
+            { InputTag: "largeant::G4" Storage: "Retained" TruthAssociations: "largeant::G4" },
+            { InputTag: "largeant:droppedMCParticles:G4" Storage: "Dropped" }
+          ]
+          AncestryMaps: ["largeant::G4"]
+          RootMotherIDs: [0]
+        }
+      ]
+    }
+  }
+  output: [transport]
+  end_paths: [output]
+}

@@ -1,7 +1,11 @@
 #include "larsoft2supera/AuxDet.h"
 #include "larsoft2supera/Generator.h"
 #include "larsoft2supera/Optical.h"
+#include "larsoft2supera/ReadDeposit.h"
 #include "larsoft2supera/ReadSpacePoint.h"
+#include "larsoft2supera/ReadTransport.h"
+#include "supera/process/AttributeDeposits.h"
+#include "supera/process/ResolveTransport.h"
 #include "supera/process/SelectGenerator.h"
 #include "supera/process/SelectSpacePoints.h"
 #include <chrono>
@@ -72,6 +76,26 @@ private:
   std::vector<GeneratorCollection> generator_collections_;
   std::vector<std::string> generator_outputs_;
 
+  struct TransportDefinition {
+    std::vector<TransportInput> sources;
+    std::vector<art::InputTag> maps;
+    std::set<std::int32_t> root_mothers;
+  };
+
+  std::vector<TransportDefinition> transport_collections_;
+  std::vector<std::string> transport_outputs_;
+
+  struct DepositDefinition {
+    art::InputTag tag;
+    supera::DepositKind kind;
+    std::size_t transport;
+    std::optional<supera::Grid3D> grid;
+  };
+
+  std::vector<DepositDefinition> deposit_collections_;
+  std::vector<supera::io::larcv2::DepositOutput> deposit_outputs_;
+  std::ofstream deposit_timings_;
+
   struct PointInput {
     art::InputTag tag;
     SpacePointProfile profile;
@@ -87,6 +111,7 @@ private:
   std::vector<PointCollection> point_collections_;
   std::vector<supera::io::larcv2::SpacePointOutput> point_outputs_;
   std::ofstream timings_;
+  std::ofstream transport_timings_;
   std::unique_ptr<supera::EventWriter> writer_;
 };
 
@@ -95,11 +120,100 @@ SuperaWriter::SuperaWriter(const fhicl::ParameterSet &config) : art::EDAnalyzer(
   const auto collections = config.get<std::vector<fhicl::ParameterSet>>("Collections", {});
   const auto auxiliary = config.get<std::vector<fhicl::ParameterSet>>("AuxiliaryCollections", {});
   const auto generator = config.get<std::vector<fhicl::ParameterSet>>("GeneratorCollections", {});
+  const auto transport = config.get<std::vector<fhicl::ParameterSet>>("TransportCollections", {});
   const auto points = config.get<std::vector<fhicl::ParameterSet>>("SpacePointCollections", {});
   const auto output_file = config.get<std::string>("OutputFile");
-  if ((collections.empty() && auxiliary.empty() && generator.empty() && points.empty()) ||
+  if ((collections.empty() && auxiliary.empty() && generator.empty() && points.empty() &&
+       transport.empty()) ||
       output_file.empty()) {
     throw std::invalid_argument("Collections and OutputFile must not be empty");
+  }
+
+  for (const auto &collection : transport) {
+    TransportDefinition definition;
+    const auto name = collection.get<std::string>("OutputLabel");
+    if (name.empty() || std::find(transport_outputs_.begin(), transport_outputs_.end(), name) !=
+                            transport_outputs_.end())
+      throw std::invalid_argument("Transport outputs must be nonempty and unique");
+    for (const auto &source : collection.get<std::vector<fhicl::ParameterSet>>("Sources")) {
+      const auto storage = source.get<std::string>("Storage");
+      if (storage != "Retained" && storage != "Dropped")
+        throw std::invalid_argument("Transport Storage must be Retained or Dropped");
+      TransportInput input{art::InputTag(source.get<std::string>("InputTag")),
+                           storage == "Retained" ? supera::TransportStorage::Retained
+                                                 : supera::TransportStorage::Dropped,
+                           {}};
+      if (input.particles.label().empty())
+        throw std::invalid_argument("Empty transport input tag");
+      const auto associations = source.get<std::string>("TruthAssociations", "");
+      if (!associations.empty())
+        input.truth_associations = art::InputTag(associations);
+      consumes<std::vector<simb::MCParticle>>(input.particles);
+      definition.sources.push_back(std::move(input));
+    }
+    if (definition.sources.empty())
+      throw std::invalid_argument("Transport Sources must not be empty");
+    for (const auto &tag : collection.get<std::vector<std::string>>("AncestryMaps", {})) {
+      if (art::InputTag(tag).label().empty())
+        throw std::invalid_argument("Empty ancestry map tag");
+      definition.maps.emplace_back(tag);
+      consumes<sim::ParticleAncestryMap>(definition.maps.back());
+    }
+    for (auto id : collection.get<std::vector<int>>("RootMotherIDs", {0}))
+      definition.root_mothers.insert(id);
+    if (definition.root_mothers.empty())
+      throw std::invalid_argument("RootMotherIDs must not be empty");
+    transport_collections_.push_back(std::move(definition));
+    transport_outputs_.push_back(name);
+  }
+
+  for (const auto &collection :
+       config.get<std::vector<fhicl::ParameterSet>>("DepositCollections", {})) {
+    const auto name = collection.get<std::string>("OutputLabel");
+    const art::InputTag tag(collection.get<std::string>("InputTag"));
+    const auto transport_name = collection.get<std::string>("Transport");
+    const auto target =
+        std::find(transport_outputs_.begin(), transport_outputs_.end(), transport_name);
+    if (tag.label().empty() || target == transport_outputs_.end())
+      throw std::invalid_argument("Deposit source and transport namespace must be explicit");
+    const auto kind_name = collection.get<std::string>("Reader");
+    if (kind_name != "SEDLite" && kind_name != "SED" && kind_name != "SimChannel")
+      throw std::invalid_argument("Unsupported deposit Reader");
+    DepositDefinition definition{tag,
+                                 kind_name == "SEDLite" ? supera::DepositKind::EnergyPoint
+                                 : kind_name == "SED"   ? supera::DepositKind::EnergyStep
+                                                        : supera::DepositKind::ReadoutIDE,
+                                 static_cast<std::size_t>(target - transport_outputs_.begin()),
+                                 {}};
+    if (collection.has_key("MinimumCM")) {
+      const auto triple = [&](const std::string &key) {
+        const auto values = collection.get<std::vector<double>>(key);
+        if (values.size() != 3)
+          throw std::invalid_argument("Deposit grid requires three values per axis");
+        return std::array<double, 3>{values[0], values[1], values[2]};
+      };
+      if (definition.kind == supera::DepositKind::ReadoutIDE)
+        throw std::invalid_argument(
+            "SimChannel energy cannot use physical-energy voxel projection");
+      definition.grid = supera::FixedGrid::from_lengths(triple("MinimumCM"), triple("LengthCM"),
+                                                        triple("VoxelSizeCM"))
+                            .metadata();
+    }
+    if (definition.kind == supera::DepositKind::EnergyPoint)
+      consumes<std::vector<sim::SimEnergyDepositLite>>(tag);
+    else if (definition.kind == supera::DepositKind::EnergyStep)
+      consumes<std::vector<sim::SimEnergyDeposit>>(tag);
+    else
+      consumes<std::vector<sim::SimChannel>>(tag);
+    deposit_outputs_.push_back({name, definition.grid.has_value()});
+    deposit_collections_.push_back(std::move(definition));
+  }
+  const auto deposit_timing_file = config.get<std::string>("DepositTimingFile", "");
+  if (!deposit_timing_file.empty()) {
+    deposit_timings_.open(deposit_timing_file);
+    if (!deposit_timings_)
+      throw std::runtime_error("Cannot open deposit timing report");
+    deposit_timings_ << "run,subrun,event,collection,read_s,attribute_s,records\n";
   }
 
   // Register optical inputs and their collection-level conventions.
@@ -229,12 +343,20 @@ SuperaWriter::SuperaWriter(const fhicl::ParameterSet &config) : art::EDAnalyzer(
     timings_ << "event,collection,read_s,select_s,write_s,voxels,nonfinite,charge_cut,outside,"
                 "collisions,replacements\n";
   }
+  const auto transport_timing_file = config.get<std::string>("TransportTimingFile", "");
+  if (!transport_timing_file.empty()) {
+    transport_timings_.open(transport_timing_file);
+    if (!transport_timings_)
+      throw std::runtime_error("Cannot open transport timing report");
+    transport_timings_ << "run,subrun,event,read_s,resolve_s,write_s,particles\n";
+  }
   output_file_ = output_file;
 }
 
 void SuperaWriter::beginJob() {
   writer_ = std::make_unique<supera::io::larcv2::Writer>(output_file_, outputs_, auxiliary_outputs_,
-                                                         generator_outputs_, point_outputs_);
+                                                         generator_outputs_, point_outputs_,
+                                                         transport_outputs_, deposit_outputs_);
 }
 
 void SuperaWriter::analyze(const art::Event &event) {
@@ -312,7 +434,71 @@ void SuperaWriter::analyze(const art::Event &event) {
     }
   }
   const auto start = now();
+  double transport_read = 0., transport_resolve = 0.;
+  std::size_t transport_count = 0;
+  for (std::size_t i = 0; i < transport_collections_.size(); ++i) {
+    const auto start = std::chrono::steady_clock::now();
+    const auto &definition = transport_collections_[i];
+    NormalizationReport report;
+    auto collection = read_transport(event, definition.sources, definition.maps, &report);
+    collection.name = transport_outputs_[i];
+    collection.root_mother_ids = definition.root_mothers;
+    report_normalization(report, event, collection.name);
+    const auto converted = std::chrono::steady_clock::now();
+    supera::resolve_transport(collection);
+    const auto resolved = std::chrono::steady_clock::now();
+    transport_read += std::chrono::duration<double>(converted - start).count();
+    transport_resolve += std::chrono::duration<double>(resolved - converted).count();
+    transport_count += collection.particles.size();
+    record.transport.push_back(std::move(collection));
+  }
+  std::vector<double> deposit_reads;
+  for (std::size_t i = 0; i < deposit_collections_.size(); ++i) {
+    const auto &definition = deposit_collections_[i];
+    const auto start = std::chrono::steady_clock::now();
+    NormalizationReport report;
+    auto collection = read_deposits(event, definition.tag, definition.kind, &report);
+    collection.name = deposit_outputs_[i].name;
+    collection.transport = record.transport.at(definition.transport).name;
+    collection.grid = definition.grid;
+    report_normalization(report, event, collection.product);
+    deposit_reads.push_back(
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count());
+    record.deposits.push_back(std::move(collection));
+  }
+
+  // Build evidence only after all requested products are available, independent of input order.
+  const auto evidence_start = std::chrono::steady_clock::now();
+  std::vector<supera::ReassignmentEvidence> readout;
+  for (const auto &transport : record.transport)
+    readout.push_back(supera::reassignment_evidence(record.deposits, transport.name));
+  if (deposit_timings_)
+    deposit_timings_
+        << event.run() << ',' << event.subRun() << ',' << event.event()
+        << ",reassignment_evidence,0,"
+        << std::chrono::duration<double>(std::chrono::steady_clock::now() - evidence_start).count()
+        << ",0\n";
+  for (std::size_t i = 0; i < record.deposits.size(); ++i) {
+    const auto start = std::chrono::steady_clock::now();
+    auto &collection = record.deposits[i];
+    const auto target = deposit_collections_[i].transport;
+    supera::attribute_deposits(collection, record.transport.at(target), readout.at(target));
+    if (deposit_timings_)
+      deposit_timings_
+          << event.run() << ',' << event.subRun() << ',' << event.event() << ',' << collection.name
+          << ',' << deposit_reads[i] << ','
+          << std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count() << ','
+          << collection.deposits.size() << '\n';
+  }
+  const auto transport_write_start = std::chrono::steady_clock::now();
   writer_->write(record);
+  if (transport_timings_)
+    transport_timings_ << event.run() << ',' << event.subRun() << ',' << event.event() << ','
+                       << transport_read << ',' << transport_resolve << ','
+                       << std::chrono::duration<double>(std::chrono::steady_clock::now() -
+                                                        transport_write_start)
+                              .count()
+                       << ',' << transport_count << '\n';
   if (timings_.is_open()) {
     timings_ << event.event() << ",writer,0,0,"
              << std::chrono::duration<double>(now() - start).count() << ",0,0,0,0,0,0\n";

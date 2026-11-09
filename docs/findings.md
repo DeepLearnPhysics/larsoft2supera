@@ -332,3 +332,126 @@ integer keys and product identity. The compatibility writer checks exact float
 representability and rejects lossy identities; measurement overflow also fails.
 The test key 16,777,217 is rejected. Native sample keys are exactly representable,
 so this safeguard does not require a reference-difference allowance.
+
+## F024: Labeling particle lists omit available generator primaries
+
+- **Status:** observed representation difference, not automatically a bug.
+- **Evidence:** the [transported-particle audit](truth-particle-audit.md) finds all
+  30 generator muons explicitly associated with retained G4 primaries, but only
+  17 distinct primary records in each frozen labeling collection. Generator
+  records remain available separately. Event 565 track 3 has 465.997542 MeV in
+  literal-ID SEDLite deposits but no corresponding SimChannel IDEs under either
+  track-ID field. This is not evidence of lost detector charge in Supera.
+- **Impact:** interpreting the labeling list as an exhaustive final-state truth
+  inventory biases particle counts and can leave daughters without output parents.
+- **Proposed resolution:** preserve source inventory and generator associations
+  independently of labeling selection, with explicit source-to-group membership.
+- **Fix/test/reviewer decision/upstream report:** none; broader fixtures required.
+
+## F025: Available suppression ancestry is not used to resolve broken chains
+
+- **Status:** observed in the ten-event reference.
+- **Evidence:** 28 merged particles have broken stored mother chains. Each has
+  a unique suppression-map link to a retained primary. Three photon records
+  reach output with unresolved ancestor fields and self-parent output IDs.
+- **Impact:** primary affiliation can be unavailable downstream despite persisted
+  evidence; self-parenting can conceal the distinction from a genuine root.
+- **Proposed resolution:** preserve raw parents and suppression links separately;
+  resolve available ancestry with explicit evidence, conflict checks, and cycle
+  detection. The map does not restore missing immediate parents or trajectories.
+- **Fix/test/reviewer decision/upstream report:** none. The audit supplies event
+  and track IDs for regression fixtures; no production behavior changed.
+
+## F026: Missing ancestor coordinates overflow LArCV Vertex quantization
+
+- **Status:** observed malformed output, with a source-level conversion mechanism.
+- **Evidence:** events/tracks 445/24832, 457/7067, and 565/5087 have `DBL_MAX`
+  parent/ancestor times in `mcreco` and `-9223372036854.7754` in both reference
+  particle collections. Vertex quantization casts the scaled value to signed
+  integer outside its representable range. These are missing coordinates.
+  Across each output collection, 40 records have that parent-time value and four
+  have that ancestor-time value. Some source parents exist but their positions
+  were not populated, so missing metadata is not confined to broken source chains.
+- **Impact:** arithmetic transforms an unavailable value into a finite number
+  that downstream code may interpret as a physical timestamp.
+- **Proposed resolution:** normalize validity before arithmetic; handle the
+  compatibility writer's inability to represent a value explicitly.
+- **Fix/test/reviewer decision/upstream report:** none for this particle path.
+
+## F027: `mcreco` dropped-particle path does not preserve origin or full metadata
+
+- **Status:** source-established omission with native evidence.
+- **Evidence:** larsim `v10_23_00` populates origins and daughters for retained
+  particles but not its dropped-particle constructor path, which also lacks
+  detector-path points. The fixture produces 46 unknown-origin MCShowers.
+  All 1,274 input dropped particles already have only two trajectory points.
+- **Impact:** treating derived objects as the transport inventory hides available
+  affiliation evidence and conflates unavailable trajectories with physical paths.
+- **Proposed resolution:** extract persisted particles and relationships first;
+  keep `mcreco` derivation and retention policies explicit. Do not invent missing
+  intermediate trajectory points.
+- **Fix/test/reviewer decision/upstream report:** none. See the audit for the exact
+  signed PDG whitelist, shower threshold, and additional unexercised source risks.
+
+## F028: Persisted transport coordinates can exceed LArCV2 Vertex's numeric range
+
+- **Status:** observed in native source and serialized inventory.
+- **Evidence:** 22 of the 1,493 persisted particles contain trajectory coordinates
+  with magnitude at least 9e12. The source comparison confirms that these values
+  predate the new reader; some exceed 1e35. Their physical interpretation is not
+  established by this audit.
+- **Impact:** passing such values through the legacy scaled-integer Vertex
+  conversion cannot faithfully represent them. This is separate from missing
+  parent metadata in F026.
+- **Local handling:** retain the exact values and an explicit range-loss count in
+  the companion archive; project a documented writer-only unavailable coordinate
+  into LArCV. Shared records retain source precision and units.
+- **Tests:** synthetic out-of-range-time round-trip and native source/archive
+  comparison. See [the transport contract](transport-port.md).
+- **Reviewer decision/upstream report:** pending; no upstream production change.
+
+### Transport implementation disposition of F024–F027
+
+The new inventory retains all 30 available primaries (F024), bridges 12 missing
+immediate-parent links to resolve the 28 affected primary affiliations (F025),
+and does not reproduce overflowed parent/ancestor coordinates (F026). It reads
+source associations directly and keeps inferred affiliation separate, avoiding
+MCReco's dropped-particle metadata path (F027). These are local implementation and
+validation results, not approvals or changes to upstream production. Neither
+missing intermediate records nor unsaved trajectory points have been recovered.
+
+## F029: Suppression-map insertion can precede parentage registration
+
+- **Status:** source-established ordering hazard in the original simulation
+  release, consistent with native evidence; current upstream status not assessed.
+- **Evidence:** larg4 `v10_00_09` `ParticleListAction.cc` calls
+  `fdroppedTracksMap[GetParentage(trackID)]` before inserting `fParentIDMap` in
+  its low-energy path. `GetParentage` requires that insertion. Later negative
+  assigned IDs can therefore be valid while the suppression-map key is
+  `NoParticleId`. All 125 initially unresolved reduced-deposit IDs in this fixture
+  appear only under that invalid map key.
+- **Local recovery:** explicit original/assigned pairs in SimChannels recover
+  27 of those IDs; persisted full steps supply the remaining 98. Keep this
+  evidence separate from exact identity and from suppression-map affiliation.
+- **Impact:** relying solely on the suppression map discards available ancestry.
+  Recovery does not recreate suppressed particle records or trajectories.
+- **Tests:** namespace-scoped cross-product evidence tests and native input/archive
+  comparisons. See [the deposit contract](deposit-port.md).
+- **Reviewer decision/upstream report:** pending; no upstream issue or patch sent.
+
+## F030: Legacy geometric cuts act on already reduced deposit bin centers
+
+- **Status:** observed difference, with independently reconstructed cause.
+- **Evidence:** original `G4InfoReducer` produces 0.3 cm bin centers. Legacy
+  Supera applies an active-volume bounding box to those positions before writing
+  its `sed` tensor. On the frozen fixture, 32 records totaling 1.7058666665 MeV
+  fail that cut, accounting for all 15 new-only voxels in the inclusive projection.
+- **Local policy:** retain all valid source points inside the configured output
+  grid; preserve raw points and explicit out-of-grid accounting. Do not assume
+  that an outside bin center establishes an outside physical deposition.
+- **Numerics:** accumulate in double precision and round to LArCV float only at
+  output. Remaining legacy differences fit the float accumulation error bound.
+- **Tests:** independent source-sum reconstruction and geometry-filtered voxel
+  inventory comparison against both legacy references.
+- **Reviewer decision/upstream report:** pending; the difference is intentional
+  and documented, not silently classified as exact parity.

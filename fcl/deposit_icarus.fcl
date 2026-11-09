@@ -1,0 +1,40 @@
+process_name: DepositPort
+source: { module_type: RootInput }
+services: { scheduler: { num_threads: 1 num_schedules: 1 } }
+physics: {
+  analyzers: {
+    transport: {
+      module_type: SuperaWriter
+      OutputFile: "deposits.root"
+      TransportTimingFile: "transport-timing.csv"
+      DepositTimingFile: "deposit-timing.csv"
+      DepositCollections: [
+        { OutputLabel: "deposit_energy" Reader: "SEDLite" InputTag: "filtersed::DetSim"
+          Transport: "transport"
+          MinimumCM: [-412.89, -181.86, -894.951]
+          LengthCM: [1843.2, 1843.2, 1843.2] VoxelSizeCM: [0.3, 0.3, 0.3] },
+        { OutputLabel: "full_steps" Reader: "SED" InputTag: "filtersed::DetSim"
+          Transport: "transport" },
+        { OutputLabel: "readout" Reader: "SimChannel" InputTag: "merge::DetSim"
+          Transport: "transport" }
+      ]
+      GeneratorCollections: [
+        { OutputLabel: "mpv" Projection: "LegacySuperaMCTruth"
+          Sources: [{ InputTag: "generator::WireModMuon" Required: true }]
+        }
+      ]
+      TransportCollections: [
+        { OutputLabel: "transport"
+          Sources: [
+            { InputTag: "largeant::G4" Storage: "Retained" TruthAssociations: "largeant::G4" },
+            { InputTag: "largeant:droppedMCParticles:G4" Storage: "Dropped" }
+          ]
+          AncestryMaps: ["largeant::G4"]
+          RootMotherIDs: [0]
+        }
+      ]
+    }
+  }
+  output: [transport]
+  end_paths: [output]
+}

@@ -108,7 +108,7 @@ zero-means-all setting into the new configuration. The supplied overlay FHiCL
 omits it, preserving the baseline selection.
 
 The coordinated Atomic dependency is
-`bd218e470d5996eb8ae13182627a1b3a4c5887f1`, pinned in the fast-check script and
+`ef7d3fa85ea44b213e780b22cc4887311fd4f4de`, pinned in the fast-check script and
 both adapter C++ workflows. Full ICARUS integration requires externally
 provisioned fixtures; the local results do not imply a hosted integration run.
 

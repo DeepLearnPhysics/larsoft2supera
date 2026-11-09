@@ -31,3 +31,7 @@ cmake -S . -B "$sanitizers" -DSupera_DIR="$stage/lib64/cmake/Supera" -DCMAKE_PRE
   -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined'
 cmake --build "$sanitizers" --target generator_test -j2
 ctest --test-dir "$sanitizers" -R '^generator_fields$' --output-on-failure
+
+# The same native value-type library now includes transported-particle extraction.
+cmake --build "$sanitizers" --target transport_test -j2
+ctest --test-dir "$sanitizers" -R '^transport_fields$' --output-on-failure
